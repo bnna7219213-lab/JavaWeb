@@ -25,7 +25,7 @@
 | product | `com.example.modulith.basic.modules.product` | 商品管理 |
 | order | `com.example.modulith.basic.modules.order` | 订单管理（跨模块） |
 | shared | `com.example.modulith.basic.shared` | 共享DTO和事件 |
-```
+
 
 | # | 项目类型 | 基础版 | 进阶版 | 端口 |
 
@@ -57,7 +57,7 @@
 
 | 13 | GraalVM原生运行时 | 13-GraalVM原生运行时基础 | 13-GraalVM原生运行时进阶 | 8103/8104 |
 
-```
+
 
 
 
