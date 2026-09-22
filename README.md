@@ -13,7 +13,7 @@
 | 11 | 自包含系统SCS | 11-自包含系统SCS基础 |11-自包含系统SCS进阶 |8099/8100 |
 | 12 | Spring Modulith单体 | 12-SpringModulith模块化单体基础 |12-SpringModulith模块化单体进阶 |8101/8102 |
 | 13 | GraalVM原生运行时 | 13-GraalVM原生运行时基础 |13-GraalVM原生运行时进阶 |8103/8104 |
-| 14 | SSM（Spring + SpringMVC + MyBatis） | 14-SSM基础版 |14-SSM进阶版 |8080 |
+| 14 | SSM（Spring + SpringMVC + MyBatis） | 14-SSM基础 |14-SSM进阶 |8080 |
 
 
 
