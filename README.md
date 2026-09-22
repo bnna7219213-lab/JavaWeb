@@ -1,4 +1,24 @@
 ```
+# Spring Modulith 模块化单体 - 基础版
+
+## 项目概述
+
+本项目演示了如何使用 Spring Boot 3.3 + JDK 21 构建模块化单体应用（Modular Monolith）。
+
+核心思想：**在一个 Spring Boot 应用中，通过清晰的包结构和接口隔离，模拟 Spring Modulith 的模块化设计模式，实现模块间的解耦。**
+
+## 技术栈
+
+- JDK 21
+- Spring Boot 3.3.5
+- Spring Web (端口: 8101)
+- Thymeleaf 模板引擎
+- Lombok
+
+## 模块化设计原则
+
+### 1. 模块封装（Module Encapsulation）
+每个模块是一个独立的包，有明确的边界：
 
 | 模块 | 包路径 | 职责 |
 |------|--------|------|
