@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>用户订单 - 跨SCS查询</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>用户关联订单</h1>
+            <p class="subtitle">跨SCS数据查询演示</p>
+        </header>
+
+        <nav class="nav">
+            <a th:href="@{/}">总览</a>
+            <a th:href="@{/user-scs/}">用户管理</a>
+            <a th:href="@{/order-scs/}">Order SCS</a>
+            <a th:href="@{/broker/}">消息中间件</a>
+        </nav>
+
+        <main class="content">
+            <div class="card">
+                <h2>用户信息 <small>(来自 User SCS 数据库)</small></h2>
+                <div class="info-grid">
+                    <div class="info-row">
+                        <span class="info-key">用户ID</span>
+                        <span class="info-val mono" th:text="${user.userId}"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-key">用户名</span>
+                        <span class="info-val" th:text="${user.username}"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-key">邮箱</span>
+                        <span class="info-val" th:text="${user.email}"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-key">状态</span>
+                        <span class="info-val" th:text="${user.status}"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>关联订单 <small th:text="'共 ' + ${#lists.size(orders)} + ' 个订单'"></small>
+                    <small>(来自 Order SCS 数据库)</small>
+                </h2>
+
+                <div th:if="${#lists.isEmpty(orders)}" class="empty-state">
+                    <p>该用户暂无订单</p>
+                    <p class="hint">注：如果用户是刚创建的，Order SCS可能需要一些时间来消费事件并创建默认订单</p>
+                </div>
+
+                <table th:if="${not #lists.isEmpty(orders)}" class="table">
+                    <thead>
+                        <tr>
+                            <th>订单ID</th>
+                            <th>用户</th>
+                            <th>订单类型</th>
+                            <th>描述</th>
+                            <th>状态</th>
+                            <th>创建时间</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="order : ${orders}">
+                            <td class="mono" th:text="${order.orderId}"></td>
+                            <td th:text="${order.username}"></td>
+                            <td>
+                                <span class="status-badge"
+                                      th:classappend="${order.orderType == 'DEFAULT' ? 'status-active' : 'status-inactive'}"
+                                      th:text="${order.orderType}"></span>
+                            </td>
+                            <td th:text="${order.description}"></td>
+                            <td>
+                                <span class="status-badge"
+                                      th:classappend="${order.status.name() == 'CONFIRMED' ? 'status-active' :
+                                                        (order.status.name() == 'PENDING' ? 'status-inactive' : 'status-suspended')}"
+                                      th:text="${order.status}"></span>
+                            </td>
+                            <td th:text="${#temporals.format(order.createdAt, 'yyyy-MM-dd HH:mm:ss')}"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3>跨SCS数据引用说明</h3>
+                <div class="info-box">
+                    <p>在真正的SCS架构中，User SCS无法直接访问Order SCS的数据库。</p>
+                    <p>这里演示了两种数据关联方式：</p>
+                    <ul>
+                        <li><strong>事件携带数据：</strong> UserCreated事件中携带username，Order SCS将username冗余存储到自己的订单记录中</li>
+                        <li><strong>通过API查询：</strong> User SCS可以通过Order SCS的API查询关联数据（如果API允许）</li>
+                    </ul>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>User SCS + Order SCS | 跨SCS数据查询</p>
+        </footer>
+    </div>
+</body>
+</html>

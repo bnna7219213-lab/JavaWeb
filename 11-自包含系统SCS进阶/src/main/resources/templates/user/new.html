@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>创建用户 - User SCS</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>创建用户</h1>
+            <p class="subtitle" th:text="${scsName}">User SCS</p>
+        </header>
+
+        <nav class="nav">
+            <a th:href="@{/}">总览</a>
+            <a th:href="@{/user-scs/}">用户管理</a>
+            <a th:href="@{/user-scs/new}" class="active">创建用户</a>
+            <a th:href="@{/order-scs/}">Order SCS</a>
+            <a th:href="@{/broker/}">消息中间件</a>
+        </nav>
+
+        <main class="content">
+            <div th:if="${errorMessage}" class="alert alert-error" th:text="${errorMessage}"></div>
+
+            <div class="card">
+                <h2>填写用户信息</h2>
+                <p class="hint">创建用户后，将自动触发跨SCS流程：
+                    发布 UserCreated 事件 -> 消息中间件 -> Order SCS 消费 -> 创建默认订单</p>
+
+                <form th:action="@{/user-scs/create}" method="post" class="form">
+                    <div class="form-group">
+                        <label for="username">用户名 *</label>
+                        <input type="text" id="username" name="username" required
+                               th:value="${username}" placeholder="请输入用户名">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">邮箱 *</label>
+                        <input type="email" id="email" name="email" required
+                               th:value="${email}" placeholder="请输入邮箱">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">手机号</label>
+                        <input type="tel" id="phone" name="phone"
+                               th:value="${phone}" placeholder="请输入手机号（可选）">
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">创建用户 (触发跨SCS事件)</button>
+                        <a th:href="@{/user-scs/}" class="btn btn-secondary">取消</a>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3>事件驱动流程</h3>
+                <div class="flow-diagram">
+                    <div class="flow-step">
+                        <div class="flow-num">1</div>
+                        <p>创建用户</p>
+                    </div>
+                    <div class="flow-arrow">-></div>
+                    <div class="flow-step">
+                        <div class="flow-num">2</div>
+                        <p>存储到<br>USER_SCS_DB</p>
+                    </div>
+                    <div class="flow-arrow">-></div>
+                    <div class="flow-step">
+                        <div class="flow-num">3</div>
+                        <p>发布<br>UserCreated</p>
+                    </div>
+                    <div class="flow-arrow">-></div>
+                    <div class="flow-step">
+                        <div class="flow-num">4</div>
+                        <p>Order SCS<br>自动创建订单</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>User SCS | 端口: 8100</p>
+        </footer>
+    </div>
+</body>
+</html>

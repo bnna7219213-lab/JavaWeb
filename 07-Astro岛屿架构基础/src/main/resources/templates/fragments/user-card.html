@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>Fragment</title></head>
+<body>
+    <!-- ========== 完整用户卡片片段 ========== -->
+    <div th:fragment="userCard(u)" class="user-card-fragment">
+        <span class="user-avatar" th:text="${u != null} ? ${u.avatar} : '?'">A</span>
+        <div class="user-details">
+            <h4 th:text="${u != null} ? ${u.name} : '未知用户'">用户名</h4>
+            <p th:text="${u != null} ? ${u.email} : ''">email</p>
+            <span class="role-badge" style="margin-top:0.3rem;display:inline-block;"
+                  th:text="${u != null} ? ${u.role} : ''">角色</span>
+        </div>
+    </div>
+
+    <!-- ========== 表格行片段 ========== -->
+    <tr th:fragment="userRow(u)" class="user-row">
+        <td th:text="${u != null} ? ${u.id} : ''">ID</td>
+        <td th:text="${u != null} ? ${u.name} : ''">姓名</td>
+        <td th:text="${u != null} ? ${u.email} : ''">邮箱</td>
+        <td th:text="${u != null} ? ${u.role} : ''">角色</td>
+        <td>
+            <span th:text="${u != null && u.active} ? '在线' : '离线'"
+                  th:classappend="${u != null && u.active} ? 'status-online' : 'status-offline'">
+                状态
+            </span>
+        </td>
+    </tr>
+
+    <!-- ========== 缩略卡片片段（纯静态，无交互） ========== -->
+    <div th:fragment="userThumb(u)" class="user-thumb">
+        <div class="thumb-avatar" th:text="${u != null} ? ${u.avatar} : '?'">A</div>
+        <span class="thumb-name" th:text="${u != null} ? ${u.name} : ''">姓名</span>
+    </div>
+</body>
+</html>

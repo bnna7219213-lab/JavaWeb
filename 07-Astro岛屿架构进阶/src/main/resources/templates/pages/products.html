@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/base}">
+<head><title>Product Management</title></head>
+<body>
+<section layout:fragment="content">
+    <div class="page-header">
+        <h1>Product Management</h1>
+        <p class="page-desc">Server-rendered product grid. React cart island below.</p>
+    </div>
+
+    <!-- Static product grid -->
+    <div class="product-grid">
+        <div th:each="p : ${products}" class="product-card">
+            <div class="product-image-placeholder">
+                <span th:text="${p.category}">Cat</span>
+            </div>
+            <div class="product-info">
+                <h3 th:text="${p.name}">Name</h3>
+                <p th:text="${p.description}">Description</p>
+                <div class="product-meta">
+                    <span class="price" th:text="'¥' + ${p.price}">¥0</span>
+                    <span class="stock" th:classappend="${p.stock > 0} ? 'in-stock' : 'out-of-stock'"
+                          th:text="${p.stock > 0} ? 'Stock: ' + ${p.stock} : 'Out of stock'">Stock</span>
+                </div>
+                <div class="rating">
+                    <span th:each="i : ${#numbers.sequence(1,5)}" class="star"
+                          th:classappend="${i <= p.rating} ? 'filled' : ''">★</span>
+                    <span th:text="${p.rating}">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Island #1: React Cart (main complex island) -->
+    <div class="island-section react-island">
+        <h2 class="island-label">
+            <span class="island-badge react">REACT</span> React Shopping Cart
+        </h2>
+        <p class="island-desc">Complex state management: cart items, total calculation, add/remove</p>
+        <div id="react-shopping-cart-root">Loading React cart...</div>
+    </div>
+
+    <!-- Island #2: Alpine.js Sort/Filter -->
+    <div class="island-section" x-data="sortIsland()" x-init="init()">
+        <h2 class="island-label">
+            <span class="island-badge alpine">ALPINE</span> Product Sort & Filter
+        </h2>
+        <div class="filter-row">
+            <select x-model="sortBy" class="filter-select">
+                <option value="name">Sort by Name</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+                <option value="rating">Rating</option>
+                <option value="stock">Stock Level</option>
+            </select>
+                        <select x-model="categoryFilter" class="filter-select">
+                <option value="">All Categories</option>
+                <option value="电脑">电脑</option>
+                <option value="手机">手机</option>
+                <option value="配件">配件</option>
+                <option value="平板">平板</option>
+                <option value="显示器">显示器</option>
+                <option value="家具">家具</option>
+            </select>
+        </div>
+        <div class="product-list-compact">
+            <template x-for="p in sortedProducts" :key="p.id">
+                <div class="product-row">
+                    <span class="product-name" x-text="p.name"></span>
+                    <span class="badge-dept" x-text="p.category"></span>
+                    <span class="price" x-text="p.price"></span>
+                    <span class="stock" x-text="p.stock + ' left'"></span>
+                    <span class="rating-star" x-text="'★ ' + p.rating"></span>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <!-- Island Dependencies -->
+    
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+
+    <!-- Island Scripts -->
+    
+<script defer th:src="@{/js/sort-island.js}"></script>
+    
+<script defer th:src="@{/js/react-cart.js}"></script>
+</section>
+</body>
+</html>

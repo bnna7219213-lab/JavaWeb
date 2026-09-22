@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>用户详情</title>
+    <link rel="stylesheet" th:href="@{/static/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <h1>用户详情</h1>
+
+        <div class="card" th:if="${user}">
+            <div style="line-height: 2.2;">
+                <p><strong>ID：</strong><span th:text="${user.id}"></span></p>
+                <p><strong>姓名：</strong><span th:text="${user.name}"></span></p>
+                <p><strong>年龄：</strong><span th:text="${user.age}"></span></p>
+                <p><strong>邮箱：</strong><span th:text="${user.email}"></span></p>
+                <p><strong>创建时间：</strong><span th:text="${user.createTime}"></span></p>
+            </div>
+            <div style="margin-top: 16px;">
+                <button onclick="location.href='/'">返回列表</button>
+                <button class="danger" th:onclick="'deleteUser(' + ${user.id} + ')'">删除</button>
+            </div>
+        </div>
+
+        <p th:if="${user == null}">用户不存在</p>
+    </div>
+
+    <script th:src="@{/static/js/app.js}"></script>
+</body>
+</html>

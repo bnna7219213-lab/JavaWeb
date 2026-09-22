@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSM基础版 - 用户管理</title>
+    <link rel="stylesheet" th:href="@{/static/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <h1>SSM 基础版 — Spring + SpringMVC + MyBatis</h1>
+
+        <!-- 搜索栏 -->
+        <div class="card">
+            <form method="get" th:action="@{/}">
+                <label>搜索姓名：</label>
+                <input type="text" name="search" th:value="${search}" placeholder="输入关键词..." />
+                <button type="submit">搜索</button>
+                <button type="button" onclick="location.href='/'">重置</button>
+            </form>
+        </div>
+
+        <!-- 新增表单 -->
+        <div class="card">
+            <h2>新增用户</h2>
+            <form onsubmit="return addUser(event)">
+                <div class="form-row">
+                    <label>姓名：</label>
+                    <input type="text" id="name" required />
+                </div>
+                <div class="form-row">
+                    <label>年龄：</label>
+                    <input type="number" id="age" required />
+                </div>
+                <div class="form-row">
+                    <label>邮箱：</label>
+                    <input type="email" id="email" />
+                </div>
+                <button type="submit">创建</button>
+            </form>
+            <div id="msg"></div>
+        </div>
+
+        <!-- 用户列表 -->
+        <div class="card">
+            <h2>用户列表（Thymeleaf 服务端渲染）</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th><th>姓名</th><th>年龄</th><th>邮箱</th><th>创建时间</th><th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(users)}"><td colspan="6">暂无数据</td></tr>
+                    <tr th:each="u : ${users}">
+                        <td th:text="${u.id}">1</td>
+                        <td th:text="${u.name}">张三</td>
+                        <td th:text="${u.age}">24</td>
+                        <td th:text="${u.email}">zhang@example.com</td>
+                        <td th:text="${u.createTime}">2024-01-01</td>
+                        <td>
+                            <a th:href="@{'/user/detail?id=' + ${u.id}}">详情</a>
+                            <a th:href="@{'/api/user?id=' + ${u.id}}" target="_blank">JSON</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script th:src="@{/static/js/app.js}"></script>
+</body>
+</html>

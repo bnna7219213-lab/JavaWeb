@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>原生 ESM 微前端 - 进阶版</title>
+  <link rel="stylesheet" href="/css/style.css">
+
+  <!--
+    Import Maps - 集中声明所有子应用共享的依赖
+    进阶版支持两个子应用 (UserModule + ProductModule) 共享 React
+    保证依赖去重，避免重复下载 React 运行时
+  -->
+  <script type="importmap">
+  {
+    "imports": {
+      "react": "https://esm.sh/react@18.3.1",
+      "react-dom": "https://esm.sh/react-dom@18.3.1",
+      "react-dom/client": "https://esm.sh/react-dom@18.3.1/client"
+    }
+  }
+  </script>
+
+  <!-- 预加载共享模块 -->
+  <link rel="modulepreload" href="https://esm.sh/react@18.3.1">
+  <link rel="modulepreload" href="https://esm.sh/react-dom@18.3.1">
+</head>
+<body>
+
+  <!-- Host App 顶部导航 -->
+  <header class="host-header">
+    <h1>Host App - 原生 ESM 微前端 (进阶版)</h1>
+    <nav class="host-nav">
+      <button class="nav-btn active" onclick="switchView('apps')">治理面板</button>
+      <button class="nav-btn" onclick="switchView('registry')">应用注册表</button>
+      <button class="nav-btn" onclick="switchView('events')">事件监控</button>
+    </nav>
+    <span class="status-bar">
+      <span class="status-dot green" id="status-dot"></span>
+      <span id="status-text">系统就绪</span>
+    </span>
+  </header>
+
+  <!-- 架构说明面板 -->
+  <details class="arch-panel" open>
+    <summary>架构体系说明 (点击展开/折叠)</summary>
+    <div class="arch-content">
+      <div class="arch-card">
+        <h4>应用注册表</h4>
+        <ul>
+          <li><strong>动态发现</strong> - 从 /api/apps 加载应用清单</li>
+          <li><strong>按需加载</strong> - 点击 Mount 才下载子应用代码</li>
+          <li><strong>配置集中</strong> - entry、containerId、version 统一管理</li>
+        </ul>
+      </div>
+      <div class="arch-card">
+        <h4>生命周期管理</h4>
+        <ul>
+          <li><strong>mount</strong> - 下载模块 + 渲染 + 注册事件</li>
+          <li><strong>unmount</strong> - 卸载 React + 清理监听 + 释放内存</li>
+          <li><strong>reload</strong> - 卸载后重新挂载，模拟独立部署</li>
+        </ul>
+      </div>
+      <div class="arch-card">
+        <h4>子应用通信</h4>
+        <ul>
+          <li><strong>事件总线</strong> - Publish/Subscribe 解耦</li>
+          <li><strong>跨域支持</strong> - CustomEvent + window 对象传递</li>
+          <li><strong>命名空间</strong> - source.eventName 格式规范</li>
+        </ul>
+      </div>
+    </div>
+  </details>
+
+  <!-- 微前端应用区域 -->
+  <div id="view-apps">
+    <div class="apps-grid">
+      <!-- UserModule 容器 -->
+      <div class="app-container" id="user-module-wrapper">
+        <div class="app-header">
+          <span class="app-title">
+            <span class="app-icon" style="background:#2563eb;color:white;">U</span>
+            UserModule - 用户管理
+            <span id="user-version" style="color:#64748b;font-size:11px;font-weight:normal;"></span>
+          </span>
+          <div class="app-actions">
+            <button class="btn-mount" onclick="mountApp('user')">Mount</button>
+            <button class="btn-unmount" onclick="unmountApp('user')">Unmount</button>
+            <button class="btn-reload" onclick="reloadApp('user')">Reload</button>
+          </div>
+        </div>
+        <div class="app-body" id="user-module-container">
+          <div class="loader"><p style="color:#64748b;padding:20px;">子应用未加载 - 点击 Mount 按钮</p></div>
+        </div>
+      </div>
+
+      <!-- ProductModule 容器 -->
+      <div class="app-container" id="product-module-wrapper">
+        <div class="app-header">
+          <span class="app-title">
+            <span class="app-icon" style="background:#16a34a;color:white;">P</span>
+            ProductModule - 商品管理
+            <span id="product-version" style="color:#64748b;font-size:11px;font-weight:normal;"></span>
+          </span>
+          <div class="app-actions">
+            <button class="btn-mount" onclick="mountApp('product')">Mount</button>
+            <button class="btn-unmount" onclick="unmountApp('product')">Unmount</button>
+            <button class="btn-reload" onclick="reloadApp('product')">Reload</button>
+          </div>
+        </div>
+        <div class="app-body" id="product-module-container">
+          <div class="loader"><p style="color:#64748b;padding:20px;">子应用未加载 - 点击 Mount 按钮</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 事件日志面板 -->
+  <div class="event-log">
+    <h3>事件监控 (Event Log) - 主子应用通信和子应用间通信</h3>
+    <div class="log-entries" id="event-log">
+      <div class="log-entry received">
+        <span class="time">--:--:--</span>
+        <span class="source">[System]</span>
+        <span>事件监控面板已就绪</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 全局 Toast 容器 -->
+  <div id="toast-container"></div>
+
+  <!-- ===========================
+       Host App 核心逻辑
+       =========================== -->
+  <script type="module">
+    // ----------
+    // 应用加载状态管理
+    // ----------
+    var apps = {
+      user: {
+        name: 'user',
+        entry: '/microapp/UserModule/main.js',
+        containerId: 'user-module-container',
+        moduleName: 'UserModule',
+        module: null,
+        instance: null,
+        status: 'unloaded'  // unloaded | loading | loaded | error
+      },
+      product: {
+        name: 'product',
+        entry: '/microapp/ProductModule/main.js',
+        containerId: 'product-module-container',
+        moduleName: 'ProductModule',
+        module: null,
+        instance: null,
+        status: 'unloaded'
+      }
+    };
+
+    var statusDot = document.getElementById('status-dot');
+    var statusText = document.getElementById('status-text');
+
+    function updateStatus(text, color) {
+      statusText.textContent = text;
+      statusDot.className = 'status-dot ' + (color || 'green');
+    }
+
+    function showToast(msg) {
+      var container = document.getElementById('toast-container');
+      var toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(function() { toast.remove(); }, 3000);
+    }
+
+    // ----------
+    // 子应用生命周期管理
+    // ----------
+    window.mountApp = async function(appName) {
+      var app = apps[appName];
+      if (!app) return;
+
+      if (app.status === 'loaded') {
+        showToast(app.moduleName + ' 已挂载，无需重复加载');
+        return;
+      }
+
+      try {
+        app.status = 'loading';
+        updateStatus('正在加载 ' + app.moduleName + '...', 'yellow');
+
+        var container = document.getElementById(app.containerId);
+        container.innerHTML = '<div class="loader"><div class="spinner"></div><p>正在下载子应用...</p></div>';
+
+        // 动态 import() - 懒加载核心：只在需要时下载子应用代码
+        app.module = await import(app.entry);
+
+        // 调用生命周期 mount
+        app.module = await loadMicroAppModule(app.entry);
+        app.instance = await app.module.mount(container, {
+          apiBase: '/api',
+          appRegistry: getAppNames()
+        });
+
+        app.status = 'loaded';
+        updateStatus(app.moduleName + ' 已挂载', 'green');
+
+        // 显示版本号
+        var versionEl = document.getElementById(appName + '-version');
+        if (versionEl && app.instance) versionEl.textContent = 'v' + (app.instance.version || '1.0.0');
+
+        showToast(app.moduleName + ' 挂载成功');
+        addLogEntry('received', '[Host]', 'Mount: ' + app.moduleName + ' - OK');
+
+      } catch (err) {
+        console.error('[Host] Mount failed:', err);
+        app.status = 'error';
+        updateStatus('加载失败', 'error');
+        showToast('挂载失败: ' + err.message);
+        addLogEntry('sent', '[Host]', 'Mount failed: ' + err.message);
+      }
+    };
+
+    // 动态 import 模块缓存
+    var _moduleCache = {};
+    async function loadMicroAppModule(entry) {
+      if (_moduleCache[entry]) {
+        console.log('[Host] Using cached module:', entry);
+        return _moduleCache[entry];
+      }
+      var mod = await import(entry);
+      _moduleCache[entry] = mod;
+      return mod;
+    }
+
+    window.unmountApp = function(appName) {
+      var app = apps[appName];
+      if (!app || app.status !== 'loaded') {
+        showToast(appName + ' 未挂载或已卸载');
+        return;
+      }
+
+      try {
+        app.module.unmount(app.instance);
+        app.instance = null;
+        app.status = 'unloaded';
+
+        var container = document.getElementById(app.containerId);
+        container.innerHTML = '<div class="loader"><p style="color:#64748b;padding:20px;">子应用已卸载 - 点击 Mount 重新加载</p></div>';
+
+        var versionEl = document.getElementById(appName + '-version');
+        if (versionEl) versionEl.textContent = '';
+
+        updateStatus(app.moduleName + ' 已卸载', 'green');
+        showToast(app.moduleName + ' 已完全卸载，资源已释放');
+        addLogEntry('sent', '[Host]', 'Unmount: ' + app.moduleName);
+
+      } catch (err) {
+        console.error('[Host] Unmount error:', err);
+        addLogEntry('sent', '[Host]', 'Unmount error: ' + err.message);
+      }
+    };
+
+    window.reloadApp = function(appName) {
+      unmountApp(appName);
+      // 清除模块缓存以模拟重新部署
+      var app = apps[appName];
+      delete _moduleCache[app.entry];
+      setTimeout(function() { mountApp(appName); }, 400);
+    };
+
+    // 一键挂载所有
+    window.mountAll = async function() {
+      await mountApp('user');
+      await mountApp('product');
+    };
+
+    // 一键卸载所有
+    window.unmountAll = function() {
+      unmountApp('user');
+      unmountApp('product');
+    };
+
+    function getAppNames() {
+      return ['user', 'product'];
+    }
+
+    // ----------
+    // 子应用事件监听和日志记录
+    // ----------
+    window.addEventListener('microapp-event', function(e) {
+      var d = e.detail;
+      if (!d) return;
+      var msg = d.source + '.' + d.eventName;
+      if (d.data) {
+        msg += ' [' + JSON.stringify(d.data).substring(0, 80) + ']';
+      }
+      addLogEntry('received', '[' + d.source + ']', 'Event: ' + d.eventName);
+
+      // 如果在事件总线视图，也触发 eventbus emit
+      // 透传到全局事件系统
+    });
+
+    window.addEventListener('eventbus-log', function(e) {
+      var log = e.detail;
+      var actionColors = {
+        'EMIT': 'sent',
+        'SUBSCRIBE': 'received',
+        'OFF_ALL': 'sent'
+      };
+      addLogEntry(actionColors[log.action] || 'received', '[EventBus]', log.msg);
+    });
+
+    function addLogEntry(type, source, msg) {
+      var logEl = document.getElementById('event-log');
+      if (!logEl) return;
+      var entry = document.createElement('div');
+      entry.className = 'log-entry ' + type;
+      var time = new Date().toLocaleTimeString();
+      entry.innerHTML = '<span class="time">' + time + '</span>' + source + ' ' + msg;
+      logEl.appendChild(entry);
+      logEl.scrollTop = logEl.scrollHeight;
+
+      // 最多保留 50 条日志
+      while (logEl.children.length > 50) {
+        logEl.removeChild(logEl.firstChild);
+      }
+    }
+
+    // ----------
+    // 视图切换
+    // ----------
+    window.switchView = function(view) {
+      var buttons = document.querySelectorAll('.host-nav .nav-btn');
+      for (var i = 0; i < buttons.length; i++) {
+        buttons[i].classList.remove('active');
+      }
+      event.target.classList.add('active');
+      // 导航功能占位
+    };
+
+    // 初始化
+    updateStatus('Host App 已就绪 - 点击 Mount 加载子应用', 'green');
+    addLogEntry('received', '[System]', 'Host App 初始化完成');
+
+  </script>
+
+</body>
+</html>

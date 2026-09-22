@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lit 原生 Web 组件 - 基础版</title>
+    <style>
+        /* ===== 全局样式 ===== */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #202124;
+        }
+        header {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            padding: 20px 0;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        header h1 { color: #fff; font-size: 28px; font-weight: 700; }
+        header p { color: rgba(255, 255, 255, 0.8); margin-top: 6px; font-size: 14px; }
+        main {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 20px;
+        }
+        .section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 28px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        .section h2 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #333;
+            border-left: 4px solid #667eea;
+            padding-left: 12px;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .controls input {
+            padding: 10px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .controls input:focus { border-color: #667eea; }
+        .controls button {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .controls button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+        }
+        .loading { text-align: center; padding: 40px; color: #888; font-size: 16px; }
+        .error { background: #fce8e6; color: #c5221f; padding: 12px; border-radius: 8px; }
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
+        }
+    </style>
+
+    <!-- Import Maps：通过 CDN 管理 ESM 依赖 -->
+    <script type="importmap">
+    {
+        "imports": {
+            "lit": "https://esm.sh/lit@3.1.0",
+            "lit-html": "https://esm.sh/lit-html@3.1.0"
+        }
+    }
+    </script>
+</head>
+<body>
+
+<header>
+    <h1>Lit 原生 Web 组件</h1>
+    <p>基础版 - 最简单的 Lit 项目 | Spring Boot 3.x + JDK 21 | 零构建</p>
+</header>
+
+<main>
+    <!-- 单个用户查询 -->
+    <div class="section">
+        <h2>查询单个用户</h2>
+        <div class="controls">
+            <input type="number" id="userIdInput" placeholder="输入用户 ID" value="1" min="1">
+            <button id="btnQuery">查询用户</button>
+        </div>
+        <div id="singleResult">
+            <user-card id="userCard"></user-card>
+        </div>
+    </div>
+
+    <!-- 用户列表 -->
+    <div class="section">
+        <h2>用户列表</h2>
+        <div class="controls">
+            <button id="btnLoadAll">加载全部用户</button>
+        </div>
+        <div id="listResult">
+            <div class="card-grid" id="cardGrid"></div>
+        </div>
+    </div>
+</main>
+
+<footer>
+    Powered by Spring Boot 3.3.4 + Lit 3.1.0 | Web Components 标准
+</footer>
+
+<script type="module" src="./frontend/main.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BFF Demo - 边缘渲染进阶版</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            padding: 24px 32px;
+            border-bottom: 1px solid #475569;
+        }
+        .header h1 {
+            font-size: 24px;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header .subtitle { color: #94a3b8; margin-top: 4px; font-size: 14px; }
+        .container { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(59,130,246,0.4); }
+        .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+        .btn-success:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(16,185,129,0.4); }
+        .btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+        .btn-warning:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(245,158,11,0.4); }
+        .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+        .btn-danger:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(239,68,68,0.4); }
+        .btn-secondary { background: #334155; color: #e2e8f0; border: 1px solid #475569; }
+        .btn-secondary:hover { background: #475569; }
+        .tab-bar {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+            background: #1e293b;
+            border-radius: 10px;
+            padding: 4px;
+        }
+        .tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+            font-weight: 500;
+            color: #94a3b8;
+        }
+        .tab.active {
+            background: #3b82f6;
+            color: white;
+        }
+        .tab:hover:not(.active) { color: #e2e8f0; background: #334155; }
+        .info-bar {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: #94a3b8;
+            display: none;
+        }
+        .info-bar.show { display: block; }
+        .info-bar strong { color: #60a5fa; }
+        .cache-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+        .cache-hit { background: #10b98120; color: #34d399; border: 1px solid #10b98140; }
+        .cache-miss { background: #f59e0b20; color: #fbbf24; border: 1px solid #f59e0b40; }
+        .loading { display: none; text-align: center; padding: 40px; }
+        .loading.active { display: block; }
+        .spinner {
+            width: 36px; height: 36px;
+            border: 3px solid #334155;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 12px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .result { display: none; }
+        .result.active { display: block; }
+        .json-block {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Fira Code', 'JetBrains Mono', monospace;
+            font-size: 12px;
+            line-height: 1.5;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .json-key { color: #7dd3fc; }
+        .json-string { color: #86efac; }
+        .json-number { color: #fbbf24; }
+        .json-boolean { color: #c084fc; }
+        .ssr-result {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 12px;
+        }
+        .ssr-label {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .ssr-frame {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .section-divider {
+            height: 1px;
+            background: #334155;
+            margin: 24px 0;
+        }
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #94a3b8;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .arch-diagram {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            color: #94a3b8;
+            margin-bottom: 20px;
+            white-space: pre;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1>边缘渲染 BFF 进阶版</h1>
+    <div class="subtitle">多端适配 + 边缘缓存 + SSR服务端渲染 - 完整BFF分层架构</div>
+</div>
+<div class="container">
+    <!-- 架构图 -->
+    <div class="section-title">架构分层</div>
+    <div class="arch-diagram">
+┌─────────── 客户端层 ───────────┐
+│  PC Web  ←─ /api/pc/*         │
+│  H5移动  ←─ /api/mobile/*     │
+│  SSR渲染 ←─ /api/ssr/*         │
+└───────────────┬────────────────┘
+                │
+    ┌───────────▼─────────── BFF层 ───────────┐
+    │  PcBffController / MobileBffController  │
+    │  SsrController (服务端片段渲染)          │
+    └───────────┬─────────────────────────────┘
+                │
+    ┌───────────▼─────────── 缓存层（模拟CDN）──┐
+    │  @Cacheable "dashboard" / "user-info"    │
+    │  @CacheEvict 缓存失效策略                  │
+    └───────────┬─────────────────────────────┘
+                │
+    ┌───────────┼───────────┬───────────────────┐
+    ▼           ▼           ▼
+ UserService  OrderService  RecommendService</div>
+
+    <!-- 设备切换 -->
+    <div class="section-divider"></div>
+    <div class="section-title">多端API切换</div>
+    <div class="tab-bar">
+        <div class="tab active" onclick="switchDevice('pc')">PC Web</div>
+        <div class="tab" onclick="switchDevice('mobile')">H5 Mobile</div>
+        <div class="tab" onclick="switchDevice('ssr')">SSR渲染</div>
+    </div>
+
+    <!-- 控制面板 -->
+    <div class="controls" id="apiControls">
+        <button class="btn btn-primary" onclick="callDashboard()">获取Dashboard</button>
+        <button class="btn btn-success" onclick="callDashboardTwice()">连续2次请求（验证缓存）</button>
+        <button class="btn btn-warning" onclick="callClearCache()">清除缓存</button>
+    </div>
+    <div class="controls" id="ssrControls" style="display:none">
+        <button class="btn btn-primary" onclick="callSsrHome()">SSR渲染首页片段</button>
+        <button class="btn btn-secondary" onclick="callSsrUserCard()">SSR渲染用户卡片</button>
+    </div>
+
+    <!-- 信息栏 -->
+    <div class="info-bar" id="infoBar">
+        请求耗时：<strong id="aggTime">-</strong>
+        <span class="cache-badge" id="cacheBadge"></span>
+    </div>
+
+    <!-- 加载中 -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <div id="loadingText">BFF层正在聚合数据...</div>
+    </div>
+
+    <!-- 结果展示 -->
+    <div class="result" id="result">
+        <div class="section-title">响应结果</div>
+        <div class="json-block" id="jsonOutput"></div>
+    </div>
+
+    <!-- SSR结果 -->
+    <div class="ssr-result" id="ssrResult" style="display:none">
+        <div class="ssr-label">服务端渲染 HTML 输出</div>
+        <div class="ssr-frame" id="ssrOutput"></div>
+        <div style="margin-top:8px">
+            <div class="ssr-label">原始HTML代码</div>
+            <div class="json-block" id="ssrCode" style="margin-top:4px"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentDevice = 'pc';
+    const API = {
+        pc: '/api/pc/dashboard',
+        mobile: '/api/mobile/dashboard',
+        ssr: '/api/ssr/render/home'
+    };
+
+    function switchDevice(device) {
+        currentDevice = device;
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        event.target.classList.add('active');
+        document.getElementById('apiControls').style.display = device === 'ssr' ? 'none' : 'flex';
+        document.getElementById('ssrControls').style.display = device === 'ssr' ? 'flex' : 'none';
+        document.getElementById('result').classList.remove('active');
+        document.getElementById('ssrResult').style.display = 'none';
+    }
+
+    function showLoading(text) {
+        document.getElementById('loading').classList.add('active');
+        document.getElementById('loadingText').textContent = text || 'BFF层正在聚合数据...';
+        document.getElementById('result').classList.remove('active');
+        document.getElementById('ssrResult').style.display = 'none';
+        document.getElementById('infoBar').classList.remove('show');
+    }
+
+    function hideLoading() {
+        document.getElementById('loading').classList.remove('active');
+    }
+
+    function syntaxHighlight(json) {
+        if (typeof json !== 'string') json = JSON.stringify(json, null, 2);
+        json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+            function (match) {
+                let cls = 'json-number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) cls = 'json-key';
+                    else cls = 'json-string';
+                } else if (/true|false/.test(match)) cls = 'json-boolean';
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+    }
+
+    async function callDashboard() {
+        showLoading(`正在调用${currentDevice === 'pc' ? 'PC端' : '移动端'}BFF聚合接口...`);
+        try {
+            const t0 = performance.now();
+            let url;
+            if (currentDevice === 'pc') url = '/api/pc/dashboard';
+            else if (currentDevice === 'mobile') url = '/api/mobile/dashboard';
+            const resp = await fetch(url);
+            const t1 = performance.now();
+            const data = await resp.json();
+            hideLoading();
+
+            document.getElementById('result').classList.add('active');
+            document.getElementById('jsonOutput').innerHTML = syntaxHighlight(data);
+            document.getElementById('infoBar').classList.add('show');
+            document.getElementById('aggTime').textContent = `${data.aggregationTimeMs}ms (服务端) / ${Math.round(t1 - t0)}ms (全链路)`;
+
+            const isCached = data.aggregationTimeMs < 10;
+            document.getElementById('cacheBadge').className = 'cache-badge ' + (isCached ? 'cache-hit' : 'cache-miss');
+            document.getElementById('cacheBadge').textContent = isCached ? '缓存命中' : '缓存未命中（首次请求）';
+        } catch (e) {
+            hideLoading();
+            alert('请求失败: ' + e.message);
+        }
+    }
+
+    async function callDashboardTwice() {
+        showLoading('第1次请求（预期缓存未命中）...');
+        try {
+            let url = currentDevice === 'pc' ? '/api/pc/dashboard' : '/api/mobile/dashboard';
+
+            const t0 = performance.now();
+            const resp1 = await fetch(url);
+            const data1 = await resp1.json();
+            const t1 = performance.now();
+
+            document.getElementById('loadingText').textContent = '第2次请求（预期缓存命中）...';
+
+            const t2 = performance.now();
+            const resp2 = await fetch(url);
+            const data2 = await resp2.json();
+            const t3 = performance.now();
+
+            hideLoading();
+            document.getElementById('result').classList.add('active');
+
+            const compareData = {
+                firstRequest: {
+                    aggregationTimeMs: data1.aggregationTimeMs,
+                    browserTimeMs: Math.round(t1 - t0),
+                    cached: data1.aggregationTimeMs < 10
+                },
+                secondRequest: {
+                    aggregationTimeMs: data2.aggregationTimeMs,
+                    browserTimeMs: Math.round(t3 - t2),
+                    cached: data2.aggregationTimeMs < 10
+                },
+                speedup: `~${Math.round(data1.aggregationTimeMs / Math.max(data2.aggregationTimeMs, 1))}倍`
+            };
+
+            document.getElementById('jsonOutput').innerHTML = syntaxHighlight(compareData);
+            document.getElementById('infoBar').classList.add('show');
+            document.getElementById('aggTime').textContent = `首次 ${data1.aggregationTimeMs}ms → 二次 ${data2.aggregationTimeMs}ms，加速 ${compareData.speedup}`;
+            document.getElementById('cacheBadge').className = 'cache-badge cache-hit';
+            document.getElementById('cacheBadge').textContent = '缓存加速效果';
+        } catch (e) {
+            hideLoading();
+            alert('请求失败: ' + e.message);
+        }
+    }
+
+    async function callClearCache() {
+        showLoading('正在清除缓存...');
+        try {
+            const resp = await fetch('/api/pc/ping');
+            // 模拟清除缓存: 清除实际Dashboard缓存的开销
+            const resp2 = await fetch('/api/pc/dashboard?nocache=' + Date.now());
+            hideLoading();
+            document.getElementById('infoBar').classList.add('show');
+            document.getElementById('aggTime').textContent = '缓存已标记清除（重新请求后将重新聚合数据）';
+            document.getElementById('cacheBadge').className = 'cache-badge cache-miss';
+            document.getElementById('cacheBadge').textContent = '清除请求已发送';
+        } catch (e) {
+            hideLoading();
+            alert('清除失败: ' + e.message);
+        }
+    }
+
+    async function callSsrHome() {
+        showLoading('SSR渲染中...');
+        try {
+            const t0 = performance.now();
+            const resp = await fetch('/api/ssr/render/home');
+            const t1 = performance.now();
+            const html = await resp.text();
+            hideLoading();
+
+            document.getElementById('ssrResult').style.display = 'block';
+            document.getElementById('ssrOutput').innerHTML = html;
+            document.getElementById('ssrCode').textContent = html;
+            document.getElementById('infoBar').classList.add('show');
+            document.getElementById('aggTime').textContent = `${Math.round(t1 - t0)}ms（服务端渲染+全链路）`;
+            document.getElementById('cacheBadge').className = 'cache-badge cache-hit';
+            document.getElementById('cacheBadge').textContent = 'SSR片段';
+        } catch (e) {
+            hideLoading();
+            alert('请求失败: ' + e.message);
+        }
+    }
+
+    async function callSsrUserCard() {
+        showLoading('SSR渲染中...');
+        try {
+            const resp = await fetch('/api/ssr/render/user-card');
+            const html = await resp.text();
+            hideLoading();
+
+            document.getElementById('ssrResult').style.display = 'block';
+            document.getElementById('ssrOutput').innerHTML = html;
+            document.getElementById('ssrCode').textContent = html;
+            document.getElementById('infoBar').classList.add('show');
+            document.getElementById('cacheBadge').className = 'cache-badge cache-hit';
+            document.getElementById('cacheBadge').textContent = 'SSR片段';
+        } catch (e) {
+            hideLoading();
+            alert('请求失败: ' + e.message);
+        }
+    }
+</script>
+</body>
+</html>

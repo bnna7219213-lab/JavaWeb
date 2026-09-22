@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>创建订单 - Order SCS</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>创建订单</h1>
+            <p class="subtitle" th:text="${scsName}">Order SCS</p>
+        </header>
+
+        <nav class="nav">
+            <a th:href="@{/}">总览</a>
+            <a th:href="@{/user-scs/}">User SCS</a>
+            <a th:href="@{/order-scs/}">订单管理</a>
+            <a th:href="@{/order-scs/new}" class="active">创建订单</a>
+            <a th:href="@{/broker/}">消息中间件</a>
+        </nav>
+
+        <main class="content">
+            <div th:if="${errorMessage}" class="alert alert-error" th:text="${errorMessage}"></div>
+
+            <div class="card">
+                <h2>新建订单</h2>
+                <p class="hint">手动创建订单，选择关联的用户和订单描述</p>
+
+                <form th:action="@{/order-scs/create}" method="post" class="form">
+                    <div class="form-group">
+                        <label for="userId">关联用户 *</label>
+                        <select id="userId" name="userId" required class="form-control">
+                            <option value="">--选择用户--</option>
+                            <option th:each="user : ${users}"
+                                    th:value="${user.userId}"
+                                    th:text="${${user.username} + ' (' + ${user.email} + ')'}">
+                            </option>
+                        </select>
+                        <span th:if="${#lists.isEmpty(users)}" class="hint">
+                            暂无可用用户，请先在 <a th:href="@{/user-scs/new}">User SCS创建用户</a>
+                        </span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">订单描述 *</label>
+                        <input type="text" id="description" name="description" required
+                               placeholder="请输入订单描述">
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">创建订单</button>
+                        <a th:href="@{/order-scs/}" class="btn btn-secondary">取消</a>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3>两种订单创建方式对比</h3>
+                <div class="info-box">
+                    <p><strong>1. 跨SCS事件驱动：</strong> 用户在User SCS注册 -> User SCS发布UserCreated事件
+                        -> Order SCS监听 -> 自动创建默认订单（类型=DEFAULT）</p>
+                    <p><strong>2. 手动创建：</strong> 通过Order SCS的UI或API手动创建订单（类型=MANUAL）</p>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>Order SCS | 端口: 8100</p>
+        </footer>
+    </div>
+</body>
+</html>

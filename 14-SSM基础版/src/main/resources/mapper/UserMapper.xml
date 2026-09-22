@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.ssm.mapper.UserMapper">
+
+    <resultMap id="UserResultMap" type="com.example.ssm.entity.User">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="age" column="age"/>
+        <result property="email" column="email"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="cols">id, name, age, email, create_time</sql>
+
+    <select id="selectById" resultMap="UserResultMap">
+        SELECT <include refid="cols"/> FROM t_user WHERE id = #{id}
+    </select>
+
+    <select id="selectAll" resultMap="UserResultMap">
+        SELECT <include refid="cols"/> FROM t_user ORDER BY id
+    </select>
+
+    <insert id="insert" parameterType="com.example.ssm.entity.User"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_user (name, age, email) VALUES (#{name}, #{age}, #{email})
+    </insert>
+
+    <update id="update" parameterType="com.example.ssm.entity.User">
+        UPDATE t_user SET name=#{name}, age=#{age}, email=#{email} WHERE id=#{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM t_user WHERE id = #{id}
+    </delete>
+
+    <select id="selectByName" resultMap="UserResultMap">
+        SELECT <include refid="cols"/> FROM t_user WHERE name LIKE CONCAT('%', #{name}, '%')
+    </select>
+
+</mapper>

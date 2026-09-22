@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>Fragment</title></head>
+<body>
+    <!-- Full user card fragment -->
+    <div th:fragment="userCard(u)" class="user-card-fragment">
+        <span class="user-avatar" th:text="${u != null} ? ${u.avatar} : '?'">A</span>
+        <div class="user-details">
+            <h4 th:text="${u != null} ? ${u.name} : 'Unknown'">Name</h4>
+            <p th:text="${u != null} ? ${u.email} : ''">email</p>
+            <span class="badge-role small" th:text="${u != null} ? ${u.role} : ''">Role</span>
+            <span class="badge-dept small" th:if="${u != null} and ${u.department != null}" th:text="${u.department}">Dept</span>
+        </div>
+    </div>
+
+    <!-- Row fragment for tables -->
+    <tr th:fragment="userRow(u)">
+        <td th:text="${u != null} ? ${u.id} : ''">ID</td>
+        <td th:text="${u != null} ? ${u.name} : ''">Name</td>
+        <td th:text="${u != null} ? ${u.email} : ''">Email</td>
+        <td th:text="${u != null} ? ${u.department} : ''">Dept</td>
+        <td th:text="${u != null} ? ${u.role} : ''">Role</td>
+        <td>
+            <span th:classappend="${u != null && u.active} ? 'status-online' : 'status-offline'"
+                  th:text="${u != null && u.active} ? 'Active' : 'Inactive'">Status</span>
+        </td>
+    </tr>
+
+    <!-- Compact thumb fragment -->
+    <div th:fragment="userThumb(u)" class="user-thumb">
+        <div class="thumb-avatar" th:text="${u != null} ? ${u.avatar} : '?'">A</div>
+        <span class="thumb-name" th:text="${u != null} ? ${u.name} : ''">Name</span>
+        <span class="thumb-role" th:if="${u != null} and ${u.role != null}" th:text="${u.role}">Role</span>
+    </div>
+
+    <!-- Product card fragment -->
+    <div th:fragment="productCard(p)" class="product-card-fragment">
+        <div class="pc-image">
+            <span th:text="${p != null} ? ${p.category} : ''">Cat</span>
+        </div>
+        <h4 th:text="${p != null} ? ${p.name} : ''">Name</h4>
+        <p class="pc-desc" th:text="${p != null} ? ${p.description} : ''">Description</p>
+        <span class="pc-price" th:text="${p != null} ? '¥' + ${p.price} : ''">Price</span>
+        <span class="pc-stock" th:text="${p != null} and ${p.available} ? 'In Stock' : 'Out'">Stock</span>
+    </div>
+</body>
+</html>

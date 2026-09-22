@@ -1,0 +1,1 @@
+{"types": [{"name": "com.example.graalvm.entity.User"}, {"name": "com.example.graalvm.entity.Order"}, {"name": "com.example.graalvm.entity.Order$OrderStatus"}, {"name": "com.example.graalvm.entity.Order$PaymentMethod"}, {"name": "java.math.BigDecimal"}, {"name": "java.util.ArrayList"}, {"name": "java.util.HashMap"}]}

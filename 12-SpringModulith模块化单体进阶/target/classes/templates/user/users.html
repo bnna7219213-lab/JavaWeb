@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户管理 - 模块化单体进阶版</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <header class="header advanced">
+        <h1>用户管理</h1>
+        <p class="subtitle">User 模块（基础模块） - 通过 UserModule 接口对外通信 | 发布 UserEvent</p>
+    </header>
+
+    <nav class="nav">
+        <a th:href="@{/}" class="nav-link">首页</a>
+        <a th:href="@{/users}" class="nav-link active">用户管理</a>
+        <a th:href="@{/products}" class="nav-link">商品管理</a>
+        <a th:href="@{/orders}" class="nav-link">订单管理</a>
+        <span class="nav-divider"></span>
+        <a th:href="@{/notifications}" class="nav-link">通知中心</a>
+        <a th:href="@{/audit}" class="nav-link">审计日志</a>
+    </nav>
+
+    <main class="container">
+        <section class="card">
+            <div class="card-header">
+                <h2>用户列表</h2>
+                <span class="badge" th:text="${#lists.size(users) + ' 个用户'}">0</span>
+            </div>
+            <table class="table">
+                <thead>
+                    <tr><th>ID</th><th>姓名</th><th>邮箱</th><th>状态</th><th>操作</th></tr>
+                </thead>
+                <tbody>
+                    <tr th:each="user : ${users}">
+                        <td th:text="${user.id}">1</td>
+                        <td th:text="${user.name}">张三</td>
+                        <td th:text="${user.email}">test@example.com</td>
+                        <td>
+                            <span class="status" th:classappend="${user.active} ? 'active' : 'inactive'"
+                                  th:text="${user.active} ? '启用' : '停用'">启用</span>
+                        </td>
+                        <td>
+                            <form th:action="@{'/users/' + ${user.id} + '/deactivate'}" method="post"
+                                  th:if="${user.active}" style="display:inline;">
+                                <button type="submit" class="btn btn-danger btn-sm">停用</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="card">
+            <h3>创建用户</h3>
+            <form th:action="@{/users}" method="post" class="form">
+                <div class="form-group">
+                    <label>姓名：</label>
+                    <input type="text" name="name" required placeholder="请输入姓名">
+                </div>
+                <div class="form-group">
+                    <label>邮箱：</label>
+                    <input type="email" name="email" required placeholder="请输入邮箱">
+                </div>
+                <button type="submit" class="btn btn-primary">创建用户</button>
+            </form>
+            <p class="notice" style="margin-top:0.8rem;">创建用户将自动触发 UserEvent，通知模块和审计模块将记录此事件。</p>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>User Module | 端口 8102</p>
+    </footer>
+</body>
+</html>

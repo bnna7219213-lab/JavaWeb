@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/base}">
+<head><title>Dashboard</title></head>
+<body>
+<section layout:fragment="content">
+    <div class="page-header">
+        <h1>Data Dashboard</h1>
+        <p class="page-desc">Static KPI cards (server-side) + React chart island (client-side)</p>
+    </div>
+
+    <!-- Static KPI cards: Thymeleaf rendered -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <span class="kpi-label">Total Users</span>
+            <span class="kpi-value" th:text="${stats.totalUsers}">0</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-label">Active Users</span>
+            <span class="kpi-value accent" th:text="${stats.activeUsers}">0</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-label">Total Products</span>
+            <span class="kpi-value" th:text="${stats.totalProducts}">0</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-label">Available Products</span>
+            <span class="kpi-value accent" th:text="${stats.availableProducts}">0</span>
+        </div>
+        <div class="kpi-card wide">
+            <span class="kpi-label">Inventory Total Value</span>
+            <span class="kpi-value large" th:text="'¥' + ${#numbers.formatDecimal(stats.totalValue, 0, 'COMMA', 2, 'POINT')}">0</span>
+        </div>
+    </div>
+
+    <!-- Island #1: React Dashboard Chart -->
+    <div class="island-section react-island">
+        <h2 class="island-label">
+            <span class="island-badge react">REACT</span> Interactive Charts
+        </h2>
+        <div id="react-dashboard-root">Loading React dashboard...</div>
+    </div>
+
+    <!-- Island #2: Alpine.js data refresh -->
+    <div class="island-section" x-data="statsIsland()" x-init='init()'>
+        <h2 class="island-label">
+            <span class="island-badge alpine">ALPINE</span> Live Stats Refresh
+        </h2>
+        <button @click="refreshStats()" class="btn-refresh" :disabled="loading">
+            <span x-text="loading ? 'Refreshing...' : 'Refresh Stats'"></span>
+        </button>
+        <div class="stats-grid" x-show="stats">
+            <div class="stat-item">
+                <span class="stat-label">Total Users</span>
+                <span class="stat-value" x-text="stats ? stats.totalUsers : '--'">--</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Total Value</span>
+                <span class="stat-value" x-text="stats ? '¥' + stats.totalValue : '--'">--</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Island Dependencies -->
+    
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+
+    <!-- Island Scripts -->
+    
+<script defer th:src="@{/js/stats-island.js}"></script>
+    
+<script defer th:src="@{/js/react-dashboard.js}"></script>
+</section>
+</body>
+</html>

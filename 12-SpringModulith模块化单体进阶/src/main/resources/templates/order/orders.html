@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>订单管理 - 模块化单体进阶版</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <header class="header advanced">
+        <h1>订单管理</h1>
+        <p class="subtitle">Order 模块（上游模块） - 通过接口引用 User + Product | 发布 OrderEvent</p>
+    </header>
+
+    <nav class="nav">
+        <a th:href="@{/}" class="nav-link">首页</a>
+        <a th:href="@{/users}" class="nav-link">用户管理</a>
+        <a th:href="@{/products}" class="nav-link">商品管理</a>
+        <a th:href="@{/orders}" class="nav-link active">订单管理</a>
+        <span class="nav-divider"></span>
+        <a th:href="@{/notifications}" class="nav-link">通知中心</a>
+        <a th:href="@{/audit}" class="nav-link">审计日志</a>
+    </nav>
+
+    <main class="container">
+        <section class="card">
+            <div class="card-header">
+                <h2>订单列表</h2>
+                <div>
+                    <span class="badge" th:text="${#lists.size(orders) + ' 个订单'}">0</span>
+                    <a th:href="@{/orders/create}" class="btn btn-primary btn-sm">+ 创建订单</a>
+                </div>
+            </div>
+            <table class="table">
+                <thead>
+                    <tr><th>ID</th><th>用户</th><th>商品</th><th>数量</th><th>金额</th><th>状态</th><th>时间</th><th>操作</th></tr>
+                </thead>
+                <tbody>
+                    <tr th:each="order : ${orders}">
+                        <td th:text="${order.id}">1</td>
+                        <td th:text="${order.userName}">张三</td>
+                        <td th:text="${order.productName}">MacBook</td>
+                        <td th:text="${order.quantity}">1</td>
+                        <td th:text="'¥' + ${#numbers.formatDecimal(order.totalAmount, 1, 2)}">¥0.00</td>
+                        <td>
+                            <span class="status" th:classappend="${order.status == 'CREATED' ? 'pending' : (order.status == 'COMPLETED' ? 'active' : 'inactive')}"
+                                  th:text="${order.status == 'CREATED' ? '已创建' : (order.status == 'COMPLETED' ? '已完成' : '已取消')}">状态</span>
+                        </td>
+                        <td th:text="${#temporals.format(order.createdAt, 'MM-dd HH:mm')}">01-01</td>
+                        <td>
+                            <form th:action="@{'/orders/' + ${order.id} + '/complete'}" method="post"
+                                  th:if="${order.status == 'CREATED'}" style="display:inline;">
+                                <button type="submit" class="btn btn-success btn-sm">完成</button>
+                            </form>
+                            <form th:action="@{'/orders/' + ${order.id} + '/cancel'}" method="post"
+                                  th:if="${order.status == 'CREATED'}" style="display:inline;">
+                                <button type="submit" class="btn btn-danger btn-sm">取消</button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(orders)}"><td colspan="8" class="text-center text-muted">暂无订单</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="card">
+            <h3>跨模块协作 & 事件驱动说明</h3>
+            <p>请点击「创建订单」或「完成/取消订单」，然后查看以下页面观察事件驱动效果：</p>
+            <ul>
+                <li><strong>通知中心</strong>：接收 OrderEvent 和 UserEvent，生成通知记录</li>
+                <li><strong>审计日志</strong>：接收所有事件，生成不可篡改的审计记录</li>
+            </ul>
+            <p class="notice">整个过程中，OrderHelper 不需知道 Notification 和 Audit 的存在。事件驱动解耦让新增监听者零成本。</p>
+        </section>
+    </main>
+
+    <footer class="footer"><p>Order Module | 端口 8102</p></footer>
+</body>
+</html>

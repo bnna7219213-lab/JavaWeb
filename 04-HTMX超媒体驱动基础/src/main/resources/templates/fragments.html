@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head></head>
+<body>
+    <!-- 用户列表片段 - 通过 hx-get="/api/user/fragment" 调用 -->
+    <div th:fragment="userList" class="user-list">
+        <h3>用户列表（共 <span th:text="${users.size()}">0</span> 人）</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>姓名</th>
+                    <th>年龄</th>
+                    <th>邮箱</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="user : ${users}">
+                    <td th:text="${user.id}">1</td>
+                    <td th:text="${user.name}">张三</td>
+                    <td th:text="${user.age}">28</td>
+                    <td th:text="${user.email}">test@example.com</td>
+                </tr>
+            </tbody>
+        </table>
+        <p class="success-msg" th:if="${users.size() > 0}">
+            通过 hx-get 请求 /api/user/fragment 获取，后端返回 HTML 片段（非 JSON）
+        </p>
+    </div>
+
+    <!-- 单个用户详情片段 - 通过 hx-get="/api/user/{id}/fragment" 调用 -->
+    <div th:fragment="userDetail" class="user-detail">
+        <h3>用户详情</h3>
+        <div class="detail-card">
+            <div class="detail-row">
+                <span class="label">ID：</span>
+                <span class="value" th:text="${user.id}">1</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">姓名：</span>
+                <span class="value" th:text="${user.name}">张三</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">年龄：</span>
+                <span class="value" th:text="${user.age}">28</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">邮箱：</span>
+                <span class="value" th:text="${user.email}">test@example.com</span>
+            </div>
+        </div>
+        <p class="success-msg">
+            通过 hx-get 请求 /api/user/{id}/fragment 获取，返回单个用户 HTML 片段
+        </p>
+    </div>
+</body>
+</html>

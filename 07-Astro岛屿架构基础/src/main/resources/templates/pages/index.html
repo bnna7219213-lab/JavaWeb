@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/base}">
+<head>
+    <title>Astro岛屿架构基础</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <div class="hero">
+        <h1>Astro 岛屿架构 (Islands Architecture)</h1>
+        <p class="subtitle">默认零 JS 静态渲染 + 局部交互水化</p>
+        <p th:text="${message}" class="message"></p>
+    </div>
+
+    <div class="features">
+        <div class="feature-card">
+            <h3>零 JS 默认</h3>
+            <p>服务端直接渲染 HTML，首屏无需加载任何 JavaScript</p>
+        </div>
+        <div class="feature-card">
+            <h3>按需水化</h3>
+            <p>仅在需要交互的区域（岛屿）加载并执行 JS</p>
+        </div>
+        <div class="feature-card">
+            <h3>极致性能</h3>
+            <p>首屏 FCP < 1s，Lighthouse 评分接近满分</p>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 交互岛屿 #1: Alpine.js 折叠面板 -->
+    <!-- 只有这个 div 区域需要 Alpine.js JS 引擎 -->
+    <!-- ============================================ -->
+    <div class="island-section" x-data="{ open: false }">
+        <h2 class="island-label">
+            <span class="island-badge">ISLAND</span> Alpine.js 折叠面板
+        </h2>
+        <button @click="open = !open" class="btn-toggle" x-text="open ? '收起详情' : '展开详情'">展开详情</button>
+        <div x-show="open" x-transition class="detail-panel">
+            <h3>岛屿架构核心原理</h3>
+            <ul>
+                <li>服务端渲染所有静态内容（HTML）</li>
+                <li>在 HTML 中标记需要交互的"岛屿"区域</li>
+                <li>客户端运行时仅水化这些岛屿组件</li>
+                <li>其余部分保持纯静态 HTML，零运行时开销</li>
+            </ul>
+            <pre><code> Astro 语法示意：
+---
+// 服务端代码（在服务端执行）
+const users = await fetch('/api/users').then(r => r.json());
+---
+&lt;!-- 静态内容（服务端渲染） --&gt;
+&lt;h1&gt;用户列表&lt;/h1&gt;
+{#each users as user}
+  &lt;p&gt;{user.name}&lt;/p&gt;
+{/each}
+
+&lt;!-- 交互岛屿（客户端水化） --&gt;
+&lt;Search client:load /&gt;
+            </code></pre>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 交互岛屿 #2: Alpine.js 计数器 -->
+    <!-- ============================================ -->
+    <div class="island-section" x-data="{ count: 0 }">
+        <h2 class="island-label">
+            <span class="island-badge">ISLAND</span> Alpine.js 计数器
+        </h2>
+        <p>当前计数：<span class="count-display" x-text="count">0</span></p>
+        <button @click="count++" class="btn-increment">+1</button>
+        <button @click="count--" class="btn-decrement">-1</button>
+        <button @click="count = 0" class="btn-reset">重置</button>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 交互岛屿 #3: Alpine.js Tab 切换 -->
+    <!-- ============================================ -->
+    <div class="island-section" x-data="{ activeTab: 'tab1' }">
+        <h2 class="island-label">
+            <span class="island-badge">ISLAND</span> Alpine.js Tab 切换
+        </h2>
+        <div class="tab-buttons">
+            <button :class="activeTab === 'tab1' ? 'active' : ''" @click="activeTab = 'tab1'">服务端渲染</button>
+            <button :class="activeTab === 'tab2' ? 'active' : ''" @click="activeTab = 'tab2'">客户端水化</button>
+            <button :class="activeTab === 'tab3' ? 'active' : ''" @click="activeTab = 'tab3'">性能对比</button>
+        </div>
+        <div class="tab-content" x-show="activeTab === 'tab1'">
+            <p>使用 Thymeleaf 模板引擎在服务端渲染 HTML，页面加载时已经包含完整内容。浏览器只需要解析 HTML + CSS 即可显示。</p>
+        </div>
+        <div class="tab-content" x-show="activeTab === 'tab2'">
+            <p>Alpine.js 只在水化特定"岛屿"组件时加载执行。其他静态区域完全不参与 JS 引擎的解析执行，大幅减少客户端负担。</p>
+        </div>
+        <div class="tab-content" x-show="activeTab === 'tab3'">
+            <table>
+                <thead><tr><th>指标</th><th>传统 SPA</th><th>岛屿架构</th></tr></thead>
+                <tbody>
+                    <tr><td>首屏 JS 大小</td><td>200KB+</td><td>~5KB</td></tr>
+                    <tr><td>FCP 时间</td><td>2-4 s</td><td>0.3-0.8 s</td></tr>
+                    <tr><td>Lighthouse 分</td><td>60-80</td><td>95-100</td></tr>
+                    <tr><td>TTI 时间</td><td>3-5 s</td><td>< 1s</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Alpine.js CDN: 所有岛屿共用一份 JS -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</section>
+</body>
+</html>

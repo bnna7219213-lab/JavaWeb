@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>订单管理 - Order SCS</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Order SCS</h1>
+            <p class="subtitle" th:text="${scsName}">Order Self-Contained System</p>
+            <span class="badge" th:text="${scsTag}">订单SCS</span>
+        </header>
+
+        <nav class="nav">
+            <a th:href="@{/}">总览</a>
+            <a th:href="@{/user-scs/}">User SCS</a>
+            <a th:href="@{/order-scs/}" class="active">订单管理</a>
+            <a th:href="@{/order-scs/new}">创建订单</a>
+            <a th:href="@{/broker/}">消息中间件</a>
+        </nav>
+
+        <main class="content">
+            <div class="card">
+                <div class="card-header">
+                    <h2>订单列表 <span class="badge">共 <span th:text="${orderCount}">0</span> 个订单</span></h2>
+                    <a th:href="@{/order-scs/new}" class="btn btn-primary">+ 创建订单</a>
+                </div>
+
+                <div th:if="${#lists.isEmpty(orders)}" class="empty-state">
+                    <p>暂无订单数据</p>
+                    <p class="hint">当User SCS创建新用户时，Order SCS会自动接收到 UserCreated 事件并创建默认订单</p>
+                    <a th:href="@{/user-scs/new}" class="btn btn-primary">去创建用户 (触发跨SCS流程)</a>
+                </div>
+
+                <table th:if="${not #lists.isEmpty(orders)}" class="table">
+                    <thead>
+                        <tr>
+                            <th>订单ID</th>
+                            <th>关联用户</th>
+                            <th>类型</th>
+                            <th>描述</th>
+                            <th>状态</th>
+                            <th>创建时间</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="order : ${orders}">
+                            <td class="mono" th:text="${order.orderId}"></td>
+                            <td>
+                                <span th:text="${order.username}"></span>
+                                <br>
+                                <small class="mono" th:text="${order.userId}"></small>
+                            </td>
+                            <td>
+                                <span class="status-badge"
+                                      th:classappend="${order.orderType == 'DEFAULT' ? 'status-active' : 'status-inactive'}"
+                                      th:text="${order.orderType}"></span>
+                            </td>
+                            <td th:text="${order.description}"></td>
+                            <td>
+                                <span class="status-badge"
+                                      th:classappend="${order.status.name() == 'CONFIRMED' ? 'status-active' :
+                                                        (order.status.name() == 'PENDING' ? 'status-inactive' : 'status-suspended')}"
+                                      th:text="${order.status}"></span>
+                            </td>
+                            <td th:text="${#temporals.format(order.createdAt, 'yyyy-MM-dd HH:mm:ss')}"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3>Order SCS 设计说明</h3>
+                <div class="info-box">
+                    <p><strong>当前SCS:</strong> Order SCS (订单服务)</p>
+                    <p><strong>数据存储:</strong> ORDER_SCS_DB (独立数据库，仅Order SCS可访问)</p>
+                    <p><strong>监听事件:</strong> UserCreated（来自 User SCS）</p>
+                    <p><strong>监听事件:</strong> UserDeleted（来自 User SCS）</p>
+                    <p><strong>跨SCS响应:</strong> 收到 UserCreated -> 自动创建默认欢迎订单</p>
+                    <p><strong>跨SCS响应:</strong> 收到 UserDeleted -> 清理关联订单</p>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>Order SCS - 端口: 8100 | 路径前缀: /order-scs/</p>
+        </footer>
+    </div>
+</body>
+</html>

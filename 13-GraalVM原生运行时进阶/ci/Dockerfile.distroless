@@ -1,0 +1,23 @@
+# GraalVM Native Image - Distroless variant (~50MB total image)
+
+# Stage 1: Maven build with AOT processing
+FROM maven:3.9-eclipse-temurin-21 AS builder
+WORKDIR /build
+COPY pom.xml .
+RUN mvn dependency:go-offline -B
+COPY src ./src
+RUN mvn clean package -DskipTests -B
+
+# Stage 2: Build native image
+FROM ghcr.io/graalvm/graalvm-community:21 AS graalvm
+RUN gu install native-image
+WORKDIR /build
+COPY --from=builder /build/target/*.jar app.jar
+RUN native-image --no-fallback -H:Name=app -O2 -march=compatibility -jar app.jar
+
+# Stage 3: Google Distroless base (minimal)
+FROM gcr.io/distroless/base-debian12:nonroot
+WORKDIR /app
+COPY --from=graalvm /build/app /app/app
+EXPOSE 8104
+ENTRYPOINT ["/app/app"]

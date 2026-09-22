@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head></head>
+<body>
+
+    <!-- ============================================ -->
+    <!-- 用户表格 - 完整表格片段 -->
+    <!-- ============================================ -->
+    <div th:fragment="userTable" class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>姓名</th>
+                    <th>年龄</th>
+                    <th>邮箱</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="user : ${users}" th:id="'user-row-' + ${user.id}">
+                    <td th:text="${user.id}">1</td>
+                    <td th:text="${user.name}">张三</td>
+                    <td th:text="${user.age}">28</td>
+                    <td th:text="${user.email}">test@example.com</td>
+                    <td class="actions">
+                        <button class="btn btn-sm btn-warning"
+                                th:hx-get="@{'/users/{id}/edit'(id=${user.id})}"
+                                th:hx-target="'#user-row-' + ${user.id}"
+                                hx-swap="outerHTML">
+                            编辑
+                        </button>
+                        <button class="btn btn-sm btn-danger"
+                                th:hx-delete="@{'/users/{id}'(id=${user.id})}"
+                                th:hx-target="'#user-row-' + ${user.id}"
+                                hx-swap="outerHTML"
+                                th:hx-confirm="'确定要删除用户「${user.name}」吗？此操作不可撤销。'">
+                            删除
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <p th:if="${#lists.isEmpty(users)}" class="empty-msg">暂无用户数据</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 单行用户数据 - 用于 outerHTML swap 行级更新 -->
+    <!-- ============================================ -->
+    <tr th:fragment="userRow" th:id="'user-row-' + ${user.id}">
+        <td th:text="${user.id}">1</td>
+        <td th:text="${user.name}">张三</td>
+        <td th:text="${user.age}">28</td>
+        <td th:text="${user.email}">test@example.com</td>
+        <td class="actions">
+            <button class="btn btn-sm btn-warning"
+                    th:hx-get="@{'/users/{id}/edit'(id=${user.id})}"
+                    th:hx-target="'#user-row-' + ${user.id}"
+                    hx-swap="outerHTML">
+                编辑
+             </button>
+            <button class="btn btn-sm btn-danger"
+                    th:hx-delete="@{'/users/{id}'(id=${user.id})}"
+                    th:hx-target="'#user-row-' + ${user.id}"
+                    hx-swap="outerHTML"
+                    th:hx-confirm="'确定要删除用户「${user.name}」吗？此操作不可撤销。'">
+                删除
+            </button>
+        </td>
+    </tr>
+
+    <!-- ============================================ -->
+    <!-- 用户表单 - 新建/编辑共用 -->
+    <!-- ============================================ -->
+    <tr th:fragment="userForm" th:id="@{'user-row-' + ${user.id}}">
+        <td colspan="5">
+            <div class="inline-form-container">
+                <h4 th:text="${user.id} != null ? '编辑用户：' + ${user.name} : '新建用户'">表单</h4>
+                <form hx-post="/users/save"
+                      th:if="${user.id != null}"
+                      th:hx-target="'#user-row-' + ${user.id}"
+                      hx-swap="outerHTML"
+                      class="inline-form">
+                    <input type="hidden" name="id" th:value="${user.id}">
+                    <div class="form-group">
+                        <input type="text" name="name" th:value="${user.name}" placeholder="姓名 *" required
+                               minlength="2" maxlength="20">
+                    </div>
+                    <div class="form-group">
+                        <input type="number" name="age" th:value="${user.age}" placeholder="年龄 *" required
+                               min="1" max="150">
+                    </div>
+                    <div class="form-group">
+                        <input type="email" name="email" th:value="${user.email}" placeholder="邮箱 *" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-success btn-sm">保存</button>
+                        <button type="button" class="btn btn-secondary btn-sm"
+                                th:attr="onclick='htmx.ajax(\'GET\', \'/users/' + ${user.id} + '/row\', {target:\'#user-row-' + ${user.id} + '\', swap:\'outerHTML\'})'">
+                            取消
+                        </button>
+                    </div>
+                </form>
+                <!-- 新建用户表单（id 为 null） -->
+                <form hx-post="/users/save"
+                      th:unless="${user.id != null}"
+                      hx-target="#form-container"
+                      hx-swap="innerHTML"
+                      class="inline-form"
+                      onsubmit="setTimeout(() => this.reset(), 100)">
+                    <input type="hidden" name="id" value="">
+                    <div class="form-group">
+                        <input type="text" name="name" placeholder="姓名 *" required
+                               minlength="2" maxlength="20">
+                    </div>
+                    <div class="form-group">
+                        <input type="number" name="age" placeholder="年龄 *" required
+                               min="1" max="150">
+                    </div>
+                    <div class="form-group">
+                        <input type="email" name="email" placeholder="邮箱 *" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-success btn-sm">保存</button>
+                        <button type="button" class="btn btn-secondary btn-sm"
+                                onclick="document.getElementById('form-container').innerHTML=''">
+                            取消
+                        </button>
+                    </div>
+                </form>
+                <div class="validation-msg">* 字段必填 | 姓名2-20字 | 年龄1-150 | 邮箱格式正确</div>
+            </div>
+        </td>
+    </tr>
+
+    <!-- ============================================ -->
+    <!-- 空片段 - 用于删除后 outerHTML swap 移除整行 -->
+    <!-- ============================================ -->
+    <tr th:fragment="empty"></tr>
+
+</body>
+</html>

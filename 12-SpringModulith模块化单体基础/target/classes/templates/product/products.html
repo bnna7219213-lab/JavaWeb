@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商品管理 - 模块化单体基础版</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <header class="header">
+        <h1>商品管理</h1>
+        <p class="subtitle">Product 模块 - 独立模块，通过 ProductModule 接口对外通信</p>
+    </header>
+
+    <nav class="nav">
+        <a th:href="@{/}" class="nav-link">首页</a>
+        <a th:href="@{/users}" class="nav-link">用户管理</a>
+        <a th:href="@{/products}" class="nav-link active">商品管理</a>
+        <a th:href="@{/orders}" class="nav-link">订单管理</a>
+    </nav>
+
+    <main class="container">
+        <section class="card">
+            <div class="card-header">
+                <h2>商品列表</h2>
+                <span class="badge" th:text="${#lists.size(products) + ' 个商品'}">0 个商品</span>
+            </div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>名称</th>
+                        <th>描述</th>
+                        <th>价格</th>
+                        <th>库存</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="product : ${products}">
+                        <td th:text="${product.id}">1</td>
+                        <td th:text="${product.name}">MacBook</td>
+                        <td th:text="${product.description}">描述</td>
+                        <td th:text="'¥' + ${#numbers.formatDecimal(product.price, 1, 2)}">¥0.00</td>
+                        <td>
+                            <span th:text="${product.stock}" class="stock">0</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="card">
+            <h3>添加商品</h3>
+            <form th:action="@{/products}" method="post" class="form">
+                <div class="form-group">
+                    <label for="name">名称：</label>
+                    <input type="text" id="name" name="name" required placeholder="商品名称">
+                </div>
+                <div class="form-group">
+                    <label for="description">描述：</label>
+                    <input type="text" id="description" name="description" placeholder="商品描述">
+                </div>
+                <div class="form-group">
+                    <label for="price">价格：</label>
+                    <input type="number" id="price" name="price" step="0.01" required placeholder="价格">
+                </div>
+                <div class="form-group">
+                    <label for="stock">库存：</label>
+                    <input type="number" id="stock" name="stock" required placeholder="库存数量">
+                </div>
+                <button type="submit" class="btn btn-primary">添加商品</button>
+            </form>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>Product Module | 访问 http://localhost:8101/products</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/base}">
+<head>
+    <title>Astro Island Architecture Advanced</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <!-- static Hero -->
+    <div class="hero hero-advanced">
+        <h1>Astro Islands Pro</h1>
+        <p class="subtitle">Advanced: Multi-Islands + React via CDN</p>
+        <p th:text="${message}" class="message"></p>
+    </div>
+
+    <!-- island map -->
+    <div class="island-map">
+        <h2>Island Distribution</h2>
+        <div class="map-grid">
+            <div class="map-item static">
+                <span class="map-label">STATIC</span>
+                <p>Hero Section</p>
+                <small>HTML/CSS only</small>
+            </div>
+            <div class="map-item alpine">
+                <span class="map-label">ALPINE</span>
+                <p>Accordion</p>
+                <small>Light interaction</small>
+            </div>
+            <div class="map-item alpine">
+                <span class="map-label">ALPINE</span>
+                <p>Search</p>
+                <small>API fetch</small>
+            </div>
+            <div class="map-item react">
+                <span class="map-label">REACT</span>
+                <p>Complex UI</p>
+                <small>CDN loaded</small>
+            </div>
+            <div class="map-item alpine">
+                <span class="map-label">ALPINE</span>
+                <p>Tabs</p>
+                <small>State mgmt</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Island #1: Alpine.js Accordion -->
+    <div class="island-section" x-data="{ openItems: {} }">
+        <h2 class="island-label">
+            <span class="island-badge alpine">ALPINE</span> Accordion Islands
+        </h2>
+        <div class="accordion">
+            <div class="accordion-item">
+                <button @click="openItems[1] = !openItems[1]" class="accordion-header">
+                    <span>What is Island Architecture?</span>
+                    <span x-text="openItems[1] ? '-' : '+'">+</span>
+                </button>
+                <div x-show="openItems[1]" x-transition class="accordion-body">
+                    <p>Island Architecture is a concept where instead of making the entire page a JavaScript app, only interactive parts ("islands") are hydrated.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Island #2: Alpine.js Search -->
+    <div class="island-section" x-data="searchIsland()" x-init="init()'>
+        <h2 class="island-label">
+            <span class="island-badge alpine">ALPINE</span> User Search Island
+        </h2>
+        <p class="island-desc">Fetch data from /api/users</p>
+        <input type="text" x-model="keyword" @input.debounce.300ms="search()" placeholder="Search..." class="search-input">
+        <div x-show="loading">Loading...</div>
+        <template x-for="user in results" :key="user.id">
+            <div class="result-item">
+                <span x-text="user.name"></span>
+                <span x-text="user.department"></span>
+            </div>
+        </template>
+    </div>
+
+    <!-- Island #3: React Cart -->
+    <div class="island-section react-island">
+        <h2 class="island-label">
+            <span class="island-badge react">REACT</span> React Shopping Cart Island
+        </h2>
+        <p class="island-desc">Complex interaction via React CDN</p>
+        <div id="react-cart-root">Loading React...</div>
+    </div>
+
+    <!-- Island Dependencies -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+
+    <!-- Island Scripts -->
+    <script defer th:src="@{/js/search-island.js}"></script>
+    <script defer th:src="@{/js/react-cart.js}"></script>
+</section>
+</body>
+</html>

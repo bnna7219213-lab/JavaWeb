@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spring Modulith 模块化单体进阶版</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <header class="header advanced">
+        <h1>Spring Modulith 模块化单体进阶版</h1>
+        <p class="subtitle">基于 Spring Boot 3.3 + JDK 21 | 五模块 + 事件驱动 + DIP</p>
+    </header>
+
+    <nav class="nav">
+        <a th:href="@{/}" class="nav-link active">首页</a>
+        <a th:href="@{/users}" class="nav-link">用户管理</a>
+        <a th:href="@{/products}" class="nav-link">商品管理</a>
+        <a th:href="@{/orders}" class="nav-link">订单管理</a>
+        <span class="nav-divider"></span>
+        <a th:href="@{/notifications}" class="nav-link">通知中心</a>
+        <a th:href="@{/audit}" class="nav-link">审计日志</a>
+    </nav>
+
+    <main class="container">
+        <section class="card">
+            <h2>进阶版架构概览</h2>
+            <p>相比基础版，进阶版新增Notification和Audit模块，通过事件驱动实现完全解耦的跨模块通信。</p>
+        </section>
+
+        <section class="card">
+            <h2>五模块架构</h2>
+            <div class="grid-5">
+                <div class="module-card">
+                    <h3>User</h3>
+                    <span class="tag base">基础模块</span>
+                    <p>用户管理<br>无依赖</p>
+                    <div class="events">
+                        <span class="evt-publish">UserEvent.created</span>
+                        <span class="evt-publish">UserEvent.deactivated</span>
+                    </div>
+                </div>
+                <div class="module-card">
+                    <h3>Product</h3>
+                    <span class="tag base">基础模块</span>
+                    <p>商品管理<br>无依赖</p>
+                </div>
+                <div class="module-card highlight">
+                    <h3>Order</h3>
+                    <span class="tag upstream">上游模块</span>
+                    <p>订单管理<br>依赖 User + Product 接口</p>
+                    <div class="events">
+                        <span class="evt-publish">OrderEvent.created</span>
+                        <span class="evt-publish">OrderEvent.completed</span>
+                        <span class="evt-publish">OrderEvent.cancelled</span>
+                    </div>
+                </div>
+                <div class="module-card event-driven">
+                    <h3>Notification</h3>
+                    <span class="tag event">事件驱动</span>
+                    <p>通知服务<br>监听 OrderEvent + UserEvent</p>
+                    <div class="events">
+                        <span class="evt-listen">@EventListener</span>
+                    </div>
+                </div>
+                <div class="module-card event-driven">
+                    <h3>Audit</h3>
+                    <span class="tag event">事件驱动</span>
+                    <p>审计服务<br>监听 OrderEvent + UserEvent</p>
+                    <div class="events">
+                        <span class="evt-listen">@EventListener</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>事件驱动通信机制</h2>
+            <pre class="diagram">
+┌──────────────────────────────────────────────────────────────────────┐
+│                    Spring Application Context                          │
+│                                                                       │
+│   ┌─────────┐ created/deactivated   ┌──────────────┐                  │
+│   │  User   │ ──── UserEvent ──────→│ Notification │                  │
+│   │ Module  │ ──────────────────→   │   (监听)      │                  │
+│   │ (发布)   │ ──────────────────→   │    Audit     │                  │
+│   └─────────┘                       │   (监听)      │                  │
+│                                      └──────────────┘                  │
+│   ┌─────────┐ created/completed/     ┌──────────────┐                  │
+│   │  Order  │ cancelled   ──────────→│ Notification │                  │
+│   │ Module  │ ──── OrderEvent ──────→│   (监听)      │                  │
+│   │ (发布)   │ ──────────────────→   │    Audit     │                  │
+│   └─────────┘                       │   (监听)      │                  │
+│        ↑                            └──────────────┘                  │
+│        │ DIP接口依赖                                                 │
+│        │                                                              │
+│   ┌────┴──────┐    ┌──────────┐                                      │
+│   │   User    │    │ Product  │                                      │
+│   │  Module   │    │  Module  │                                      │
+│   │  (接口)    │    │  (接口)   │                                      │
+│   └───────────┘    └──────────┘                                      │
+└──────────────────────────────────────────────────────────────────────┘
+            </pre>
+            <p style="margin-top:0.8rem;font-size:0.85rem;color:#666;">
+                <strong>关键：</strong>Notification 和 Audit 完全不知道 Order/User 的存在。
+                它们只通过 @EventListener 接收事件，实现零耦合通信。
+                新增监听者时，源模块代码无需任何修改。
+            </p>
+        </section>
+
+        <section class="card">
+            <h2>依赖倒置（DIP）完整示意图</h2>
+            <pre class="diagram">
+OrderServiceImpl 构造器注入:
+  ┌─────────────────────────────────────────────┐
+  │ OrderServiceImpl                             │
+  │  - userModule: UserModule (接口)             │
+  │  - productModule: ProductModule (接口)       │
+  │  - eventPublisher: ApplicationEventPublisher │
+  └─────────────────────────────────────────────┘
+           ↑                      ↑
+     Spring注入                Spring注入
+           │                      │
+  ┌────────┴─────────┐  ┌────────┴──────────┐
+  │ UserServiceImpl  │  │ ProductServiceImpl │
+  │ (implements      │  │ (implements        │
+  │  UserModule)     │  │  ProductModule)    │
+  │                  │  │                    │
+  │ 位于 internal 包  │  │ 位于 internal 包    │
+  └──────────────────┘  └────────────────────┘
+
+优势：UserServiceImpl 将来可替换为 RemoteUserModuleImpl（通过Feign/HTTP），
+      OrderServiceImpl 代码完全不需要修改。
+            </pre>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>Spring Modulith 模块化单体进阶版 | 端口 8102 | JDK 21 + Spring Boot 3.3 | 5 Modules</p>
+    </footer>
+</body>
+</html>

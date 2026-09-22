@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebAssembly 高性能计算演示 - 基础版</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0c0c1d 0%, #1a1a3e 50%, #0c0c1d 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 {
+            text-align: center;
+            font-size: 2em;
+            margin-bottom: 8px;
+            background: linear-gradient(90deg, #00d4ff, #7b2fff, #ff2d95);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+            font-size: 0.95em;
+        }
+
+        /* 状态面板 */
+        .status-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .status-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 18px;
+        }
+        .status-card h3 {
+            font-size: 0.85em;
+            text-transform: uppercase;
+            color: #00d4ff;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        .status-ok { background: rgba(0, 255, 100, 0.15); color: #00ff64; border: 1px solid #00ff64; }
+        .status-warn { background: rgba(255, 200, 0, 0.15); color: #ffc800; border: 1px solid #ffc800; }
+        .status-error { background: rgba(255, 50, 50, 0.15); color: #ff3232; border: 1px solid #ff3232; }
+
+        /* 性能面板 */
+        .benchmark-panel {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+        .benchmark-panel h2 {
+            color: #7b2fff;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+        .task-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .task-btn {
+            padding: 10px 20px;
+            border: 2px solid rgba(123, 47, 255, 0.5);
+            background: transparent;
+            color: #ccc;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+        .task-btn:hover, .task-btn.active {
+            border-color: #7b2fff;
+            background: rgba(123, 47, 255, 0.2);
+            color: #fff;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .input-group label { color: #aaa; }
+        .input-group input[type="number"] {
+            width: 120px;
+            padding: 8px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            border-radius: 6px;
+            font-size: 1em;
+        }
+        .run-btn {
+            padding: 10px 30px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #7b2fff, #00d4ff);
+            color: #fff;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .run-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(123, 47, 255, 0.4);
+        }
+        .run-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 结果展示 */
+        .results-area {
+            margin-top: 20px;
+        }
+        .result-item {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .result-mode { font-weight: bold; color: #00d4ff; min-width: 160px; }
+        .result-time { font-size: 1.1em; font-family: monospace; }
+        .result-value { color: #888; font-size: 0.85em; }
+        .bar-container {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+        .bar-js { background: linear-gradient(90deg, #ff6b6b, #ff2d95); }
+        .bar-wasm { background: linear-gradient(90deg, #00d4ff, #00ff64); }
+
+        /* 架构图 */
+        .architecture-section {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+        .architecture-section h2 { color: #00d4ff; margin-bottom: 15px; }
+        .arch-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            padding: 20px;
+        }
+        .arch-box {
+            padding: 15px 25px;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 150px;
+        }
+        .arch-backend { background: rgba(0, 212, 255, 0.15); border: 1px solid #00d4ff; }
+        .arch-network { background: rgba(255, 200, 0, 0.15); border: 1px solid #ffc800; }
+        .arch-frontend { background: rgba(123, 47, 255, 0.15); border: 1px solid #7b2fff; }
+        .arch-box .label { font-weight: bold; margin-bottom: 5px; }
+        .arch-box .desc { font-size: 0.75em; color: #999; }
+        .arch-arrow { font-size: 1.5em; color: #555; }
+
+        /* 降级提示 */
+        .fallback-banner {
+            background: rgba(255, 150, 0, 0.1);
+            border: 1px solid rgba(255, 150, 0, 0.3);
+            border-radius: 8px;
+            padding: 12px 18px;
+            margin-bottom: 20px;
+            display: none;
+            color: #ffaa00;
+        }
+        .fallback-banner.show { display: block; }
+
+        /* 对比表格 */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .comparison-table th, .comparison-table td {
+            padding: 10px 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .comparison-table th { color: #00d4ff; font-size: 0.85em; text-transform: uppercase; }
+        .comparison-table td { color: #ccc; }
+        .comparison-table tr:hover { background: rgba(255, 255, 255, 0.03); }
+
+        footer {
+            text-align: center;
+            color: #555;
+            margin-top: 40px;
+            padding: 20px;
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WebAssembly 高性能计算演示</h1>
+        <p class="subtitle">基础版 | Java(Spring Boot) 后端 + WASM 前端 | 端口 8097</p>
+
+        <!-- 降级提示 -->
+        <div class="fallback-banner" id="fallbackBanner">
+            <strong>注意：</strong>当前浏览器不支持 WebAssembly 或 WASM 模块加载失败，已降级为 JavaScript 原生模式。
+            性能对比结果仅在 JS 与 JS 模拟 WASM 之间比较，实际 WASM 性能优势更显著。
+        </div>
+
+        <!-- 状态面板 -->
+        <div class="status-panel">
+            <div class="status-card">
+                <h3>浏览器 WASM 支持</h3>
+                <span class="status-badge" id="wasmSupportBadge">检测中...</span>
+                <p style="margin-top:8px;color:#888;font-size:0.85em;" id="wasmSupportDetail"></p>
+            </div>
+            <div class="status-card">
+                <h3>WASM 模块加载状态</h3>
+                <div id="moduleLoadStatus">
+                    <p style="color:#888;">加载中...</p>
+                </div>
+            </div>
+            <div class="status-card">
+                <h3>后端 API 状态</h3>
+                <span class="status-badge" id="apiStatusBadge">检测中...</span>
+                <p style="margin-top:8px;color:#888;font-size:0.85em;" id="apiStatusDetail"></p>
+            </div>
+        </div>
+
+        <!-- 性能对比面板 -->
+        <div class="benchmark-panel">
+            <h2>性能对比测试面板</h2>
+            <div class="task-selector">
+                <button class="task-btn active" data-task="fibonacci">斐波那契数列</button>
+                <button class="task-btn" data-task="prime">质数筛选</button>
+                <button class="task-btn" data-task="image">图像卷积</button>
+            </div>
+            <div class="input-group">
+                <label for="inputValue">输入参数 (n):</label>
+                <input type="number" id="inputValue" value="40" min="1" max="50">
+                <button class="run-btn" id="runBenchmark">运行性能测试</button>
+            </div>
+            <div class="results-area" id="resultsArea">
+                <p style="color:#666;">点击"运行性能测试"开始对比 JS 与 WASM 执行速度</p>
+            </div>
+        </div>
+
+        <!-- 实时结果 -->
+        <div class="benchmark-panel" id="realtimeResults" style="display:none;">
+            <h2>测试结果</h2>
+            <table class="comparison-table" id="resultTable">
+                <thead>
+                    <tr>
+                        <th>执行模式</th>
+                        <th>耗时 (ms)</th>
+                        <th>计算结果</th>
+                        <th>相对性能</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- WASM 架构说明 -->
+        <div class="architecture-section">
+            <h2>WASM 架构原理</h2>
+            <div class="arch-diagram">
+                <div class="arch-box arch-backend">
+                    <div class="label">Java Spring Boot</div>
+                    <div class="desc">数据服务 / API 层<br>端口 8097</div>
+                </div>
+                <div class="arch-arrow">&rarr;</div>
+                <div class="arch-box arch-network">
+                    <div class="label">HTTP / API</div>
+                    <div class="desc">REST 接口<br>JSON 数据</div>
+                </div>
+                <div class="arch-arrow">&rarr;</div>
+                <div class="arch-box arch-frontend">
+                    <div class="label">浏览器端</div>
+                    <div class="desc">WASM 模块<br>高性能计算</div>
+                </div>
+            </div>
+            <p style="color:#888;margin-top:15px;font-size:0.9em; text-align:center;">
+                后端(Spring Boot)提供数据和业务 API，浏览器通过加载 .wasm 模块执行近原生速度的计算密集型逻辑。
+                WASM 字节码在浏览器内以接近本地机器码的速度运行，相比纯 JavaScript 通常有 1.5x-3x 的性能提升。
+            </p>
+        </div>
+
+        <footer>
+            WebAssembly Demo - Basic Edition | JDK 21 + Spring Boot 3.2 | Port 8097
+        </footer>
+    </div>
+
+    <script src="wasm/wasm-simulator.js"></script>
+    <script>
+    (function() {
+        var wasmSim = new WasmSimulator();
+        window.wasmSim = wasmSim;
+        var benchmark = new PerformanceBenchmark();
+        var currentTask = 'fibonacci';
+        var maxDuration = 0;
+
+        // 初始化
+        async function init() {
+            // 1. 检测 WASM 支持
+            var support = await wasmSim.detectSupport();
+            var badge = document.getElementById('wasmSupportBadge');
+            var detail = document.getElementById('wasmSupportDetail');
+            if (support.supported) {
+                badge.textContent = '已支持';
+                badge.className = 'status-badge status-ok';
+            } else {
+                badge.textContent = '不支持';
+                badge.className = 'status-badge status-error';
+                showFallback();
+            }
+            detail.textContent = support.reason;
+
+            // 2. 加载 WASM 模块
+            var instance = await wasmSim.loadModule('fibonacci', 'wasm/fibonacci.wasm');
+            var moduleStatus = document.getElementById('moduleLoadStatus');
+            var status = wasmSim.loadStatus.fibonacci;
+            if (status && status.loaded) {
+                moduleStatus.innerHTML = '<span class="status-badge status-ok">fibonacci.wasm 已加载</span>' +
+                    '<p style="margin-top:6px;color:#888;font-size:0.8em;">导出: ' + status.exports.join(', ') + '</p>';
+            } else {
+                moduleStatus.innerHTML = '<span class="status-badge status-warn">加载失败</span>' +
+                    '<p style="margin-top:6px;color:#888;font-size:0.8em;">' + (status && status.error) + '</p>';
+                // 如果 WASM 加载失败，使用 JS 降级模拟 WASM 性能差异
+                if (instance === null) {
+                    showFallback();
+                }
+            }
+
+            // 3. 检测后端 API
+            try {
+                var resp = await fetch('/api/wasm-info');
+                var data = await resp.json();
+                document.getElementById('apiStatusBadge').textContent = '已连接';
+                document.getElementById('apiStatusBadge').className = 'status-badge status-ok';
+                document.getElementById('apiStatusDetail').textContent =
+                    data.modules.length + ' 个WASM模块 | ' + data.architecture;
+            } catch (e) {
+                document.getElementById('apiStatusBadge').textContent = '无法连接';
+                document.getElementById('apiStatusBadge').className = 'status-badge status-error';
+                document.getElementById('apiStatusDetail').textContent = '后端服务可能未启动';
+            }
+        }
+
+        function showFallback() {
+            document.getElementById('fallbackBanner').classList.add('show');
+        }
+
+        // 任务选择
+        document.querySelectorAll('.task-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.task-btn').forEach(function(b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                currentTask = btn.dataset.task;
+
+                // 设置默认输入
+                var defaults = { fibonacci: 40, prime: 100000, image: 200 };
+                document.getElementById('inputValue').value = defaults[currentTask];
+            });
+        });
+
+        // 运行性能测试
+        document.getElementById('runBenchmark').addEventListener('click', async function() {
+            var btn = this;
+            btn.disabled = true;
+            btn.textContent = '运行中...';
+
+            var input = parseInt(document.getElementById('inputValue').value, 10);
+            if (isNaN(input) || input < 1) input = 40;
+
+            // 使用 setTimeout 让 UI 有机会更新
+            await new Promise(function(r) { setTimeout(r, 50); });
+
+            var result = benchmark.runComparison(currentTask, input);
+
+            displayResult(result);
+
+            btn.disabled = false;
+            btn.textContent = '运行性能测试';
+        });
+
+        function displayResult(result) {
+            maxDuration = Math.max(result.comparisons[0].duration, result.comparisons[1].duration);
+            var area = document.getElementById('resultsArea');
+            var html = '';
+
+            html += '<div style="margin-bottom:12px;"><strong>任务: ' + result.task + '</strong> | 输入: ' + result.input;
+            if (result.speedup) {
+                html += ' | <span style="color:#00ff64;">提速: ' + result.speedup + 'x</span>';
+            }
+            html += '</div>';
+
+            for (var i = 0; i < result.comparisons.length; i++) {
+                var comp = result.comparisons[i];
+                var pct = maxDuration > 0 ? (comp.duration / maxDuration * 100) : 50;
+                var barClass = i === 0 ? 'bar-js' : 'bar-wasm';
+                html += '<div class="result-item">' +
+                    '<span class="result-mode">' + comp.mode + '</span>' +
+                    '<div style="flex:1;min-width:200px;">' +
+                    '<span class="result-time" style="color:' + (i === 0 ? '#ff6b6b' : '#00ff64') + '">' + comp.durationMs + ' ms</span>' +
+                    '<div class="bar-container"><div class="bar-fill ' + barClass + '" style="width:' + pct + '%"></div></div>' +
+                    '</div>' +
+                    '<span class="result-value">结果: ' + formatResult(comp.result) + '</span>' +
+                    '</div>';
+            }
+
+            area.innerHTML = html;
+
+            // 更新表格
+            document.getElementById('realtimeResults').style.display = 'block';
+            var tbody = document.querySelector('#resultTable tbody');
+            tbody.innerHTML = '';
+            for (var i = 0; i < result.comparisons.length; i++) {
+                var comp = result.comparisons[i];
+                var pct = maxDuration > 0 ? (comp.duration / maxDuration * 100) : 50;
+                var ratio = i === 0
+                    ? (result.speedup ? (parseFloat(result.speedup) + 'x 慢') : '基准')
+                    : (result.speedup ? '1x (基准)' : '基准');
+                tbody.innerHTML += '<tr>' +
+                    '<td>' + comp.mode + '</td>' +
+                    '<td style="color:' + (i === 0 ? '#ff6b6b' : '#00ff64') + ';' + (pct === 100 ? 'font-weight:bold;' : '') + '">' + comp.durationMs + ' ms</td>' +
+                    '<td>' + formatResult(comp.result) + '</td>' +
+                    '<td>' + ratio + '</td>' +
+                    '</tr>';
+            }
+        }
+
+        function formatResult(val) {
+            if (typeof val === 'number') {
+                if (val > 1000000) return val.toExponential(4);
+                return val.toString();
+            }
+            return String(val).substring(0, 50);
+        }
+
+        init();
+    })();
+    </script>
+</body>
+</html>

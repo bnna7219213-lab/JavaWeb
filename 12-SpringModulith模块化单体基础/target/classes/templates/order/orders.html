@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>订单管理 - 模块化单体基础版</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <header class="header">
+        <h1>订单管理</h1>
+        <p class="subtitle">Order 模块 - 跨模块协作：通过接口调用 User 和 Product 模块</p>
+    </header>
+
+    <nav class="nav">
+        <a th:href="@{/}" class="nav-link">首页</a>
+        <a th:href="@{/users}" class="nav-link">用户管理</a>
+        <a th:href="@{/products}" class="nav-link">商品管理</a>
+        <a th:href="@{/orders}" class="nav-link active">订单管理</a>
+    </nav>
+
+    <main class="container">
+        <section class="card">
+            <div class="card-header">
+                <h2>订单列表</h2>
+                <div>
+                    <span class="badge" th:text="${#lists.size(orders) + ' 个订单'}">0 个订单</span>
+                    <a th:href="@{/orders/create}" class="btn btn-primary btn-sm">+ 创建订单</a>
+                </div>
+            </div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>用户</th>
+                        <th>商品</th>
+                        <th>数量</th>
+                        <th>总金额</th>
+                        <th>状态</th>
+                        <th>创建时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="order : ${orders}">
+                        <td th:text="${order.id}">1</td>
+                        <td th:text="${order.userName}">张三</td>
+                        <td th:text="${order.productName}">MacBook</td>
+                        <td th:text="${order.quantity}">1</td>
+                        <td th:text="'¥' + ${#numbers.formatDecimal(order.totalAmount, 1, 2)}">¥0.00</td>
+                        <td>
+                            <span class="status" th:classappend="${order.status == 'CREATED' ? 'pending' : (order.status == 'COMPLETED' ? 'active' : 'inactive')}"
+                                  th:text="${order.status == 'CREATED' ? '已创建' : (order.status == 'COMPLETED' ? '已完成' : '已取消')}">状态</span>
+                        </td>
+                        <td th:text="${#temporals.format(order.createdAt, 'yyyy-MM-dd HH:mm')}">2024-01-01</td>
+                        <td>
+                            <form th:action="@{'/orders/' + ${order.id} + '/complete'}" method="post"
+                                  th:if="${order.status == 'CREATED'}" style="display:inline;">
+                                <button type="submit" class="btn btn-success btn-sm">完成</button>
+                            </form>
+                            <form th:action="@{'/orders/' + ${order.id} + '/cancel'}" method="post"
+                                  th:if="${order.status == 'CREATED'}" style="display:inline;">
+                                <button type="submit" class="btn btn-danger btn-sm">取消</button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(orders)}">
+                        <td colspan="8" class="text-center text-muted">暂无订单</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="card">
+            <h3>跨模块协作说明</h3>
+            <p>创建订单时，<code>OrderService</code> 通过以下方式与其他模块协作：</p>
+            <ol>
+                <li>调用 <code>UserModule.getUser(userId)</code> 验证用户有效性</li>
+                <li>调用 <code>ProductModule.getProduct(productId)</code> 获取商品信息</li>
+                <li>调用 <code>ProductModule.reduceStock()</code> 扣减库存</li>
+                <li>发布 <code>OrderEvent</code> 通知其他模块</li>
+            </ol>
+            <p class="notice">关键：OrderService 只引用接口（UserModule/ProductModule），不引用具体实现类。</p>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>Order Module | 访问 http://localhost:8101/orders</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>订单管理</title>
+    <link rel="stylesheet" th:href="@{/static/css/style.css}">
+</head>
+<body>
+    <nav class="topnav">
+        <span class="brand">SSM 进阶版</span>
+        <a th:href="@{/}">仪表盘</a>
+        <a th:href="@{/users.html}">用户管理</a>
+        <a th:href="@{/orders.html}">订单管理</a>
+    </nav>
+
+    <div class="container">
+        <h1>订单管理</h1>
+
+        <div class="card">
+            <form method="get" th:action="@{/orders.html}">
+                <label>状态：</label>
+                <select name="status">
+                    <option value="">全部</option>
+                    <option value="PENDING" th:append="${status != null} ? selected : ''">待处理</option>
+                    <option value="PAID">已支付</option>
+                    <option value="SHIPPED">已发货</option>
+                    <option value="COMPLETED">已完成</option>
+                </select>
+                <button type="submit">筛选</button>
+                <button type="button" class="secondary" onclick="document.getElementById('addForm').style.display='block'">+ 新增订单</button>
+            </form>
+
+            <div id="addForm" style="display:none; margin-top:16px; border-top:1px solid #e8eaed; padding-top:16px;">
+                <h3>新增订单</h3>
+                <form onsubmit="return addOrder(event)">
+                    <div class="form-row"><label>用户ID*</label><input type="number" id="userId" required /></div>
+                    <div class="form-row"><label>商品*</label><input type="text" id="product" required /></div>
+                    <div class="form-row"><label>金额*</label><input type="number" id="amount" step="0.01" required /></div>
+                    <button type="submit">创建</button>
+                    <button type="button" class="secondary" onclick="document.getElementById('addForm').style.display='none'">取消</button>
+                </form>
+            </div>
+            <div id="msg"></div>
+        </div>
+
+        <div class="card">
+            <h2>订单列表（共 <span th:text="${total}">0</span> 条）</h2>
+            <table>
+                <thead><tr><th>订单号</th><th>用户</th><th>商品</th><th>金额</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(orders)}"><td colspan="7">暂无数据</td></tr>
+                    <tr th:each="o : ${orders}">
+                        <td th:text="${o.orderNo}">ORD001</td>
+                        <td th:text="${o.userName}">-</td>
+                        <td th:text="${o.product}">MacBook</td>
+                        <td th:text="${'¥' + o.amount}">¥0.00</td>
+                        <td>
+                            <span class="status-badge" th:classappend="'status-' + ${o.status}"
+                                  th:text="${o.status}">PENDING</span>
+                        </td>
+                        <td th:text="${o.createTime}">2024-01-01</td>
+                        <td><button class="danger" th:onclick="'deleteOrder(' + ${o.id} + ')'">删除</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script th:src="@{/static/js/app.js}"></script>
+</body>
+</html>

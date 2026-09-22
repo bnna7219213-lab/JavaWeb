@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>订单详情 - Order SCS</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>订单详情</h1>
+            <p class="subtitle" th:text="${scsName}">Order SCS</p>
+        </header>
+
+        <nav class="nav">
+            <a th:href="@{/}">总览</a>
+            <a th:href="@{/user-scs/}">User SCS</a>
+            <a th:href="@{/order-scs/}">订单管理</a>
+            <a th:href="@{/broker/}">消息中间件</a>
+        </nav>
+
+        <main class="content">
+            <div class="card">
+                <h2>订单信息</h2>
+                <div class="info-grid">
+                    <div class="info-row">
+                        <span class="info-key">订单ID</span>
+                        <span class="info-val mono" th:text="${order.orderId}"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-key">用户ID</span>
+                        <span class="info-val mono" th:text="${order.userId}"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-key">用户名</span>
+                        <span class="info-val" th:text="${order.username}"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-key">订单类型</span>
+                        <span class="info-val">
+                            <span class="status-badge"
+                                  th:classappend="${order.orderType == 'DEFAULT' ? 'status-active' : 'status-inactive'}"
+                                  th:text="${order.orderType}"></span>
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-key">描述</span>
+                        <span class="info-val" th:text="${order.description}"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-key">状态</span>
+                        <span class="info-val">
+                            <span class="status-badge"
+                                  th:classappend="${order.status.name() == 'CONFIRMED' ? 'status-active' :
+                                                    (order.status.name() == 'PENDING' ? 'status-inactive' : 'status-suspended')}"
+                                  th:text="${order.status}"></span>
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-key">创建时间</span>
+                        <span class="info-val" th:text="${#temporals.format(order.createdAt, 'yyyy-MM-dd HH:mm:ss')}"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" th:if="${order.orderType == 'DEFAULT'}">
+                <h3>自动创建说明</h3>
+                <div class="info-box">
+                    <p>此订单是 Order SCS 通过监听 User SCS 发布的 <strong>UserCreated</strong> 事件自动创建的。</p>
+                    <p><strong>数据流动:</strong> 用户注册(User SCS) -> 事件发布 -> 消息中间件 -> 事件消费(Order SCS) -> 创建此订单</p>
+                </div>
+            </div>
+
+            <div class="card" th:if="${order.orderType == 'MANUAL'}">
+                <h3>手动创建说明</h3>
+                <div class="info-box">
+                    <p>此订单是通过 Order SCS 的手动创建接口创建的。</p>
+                </div>
+            </div>
+
+            <a th:href="@{/order-scs/}" class="btn btn-secondary">返回订单列表</a>
+        </main>
+
+        <footer class="footer">
+            <p>Order SCS - 端口: 8100</p>
+        </footer>
+    </div>
+</body>
+</html>

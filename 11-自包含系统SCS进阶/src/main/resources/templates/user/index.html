@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>用户管理 - User SCS</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>User SCS</h1>
+            <p class="subtitle" th:text="${scsName}">User Self-Contained System</p>
+            <span class="badge" th:text="${scsTag}">用户SCS</span>
+        </header>
+
+        <nav class="nav">
+            <a th:href="@{/}">总览</a>
+            <a th:href="@{/user-scs/}" class="active">用户管理</a>
+            <a th:href="@{/user-scs/new}">创建用户</a>
+            <a th:href="@{/order-scs/}">Order SCS</a>
+            <a th:href="@{/broker/}">消息中间件</a>
+        </nav>
+
+        <main class="content">
+            <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>用户列表 <span class="badge">共 <span th:text="${userCount}">0</span> 个用户</span></h2>
+                    <a th:href="@{/user-scs/new}" class="btn btn-primary">+ 创建用户</a>
+                </div>
+
+                <div th:if="${#lists.isEmpty(users)}" class="empty-state">
+                    <p>暂无用户数据</p>
+                    <p class="hint">创建用户后，Order SCS 会自动接收到 UserCreated 事件并创建默认订单</p>
+                    <a th:href="@{/user-scs/new}" class="btn btn-primary">创建第一个用户</a>
+                </div>
+
+                <table th:if="${not #lists.isEmpty(users)}" class="table">
+                    <thead>
+                        <tr>
+                            <th>用户ID</th>
+                            <th>用户名</th>
+                            <th>邮箱</th>
+                            <th>手机</th>
+                            <th>状态</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="user : ${users}">
+                            <td class="mono" th:text="${user.userId}"></td>
+                            <td th:text="${user.username}"></td>
+                            <td th:text="${user.email}"></td>
+                            <td th:text="${user.phone ?: '-'}"></td>
+                            <td>
+                                <span class="status-badge"
+                                      th:classappend="${user.status.name() == 'ACTIVE' ? 'status-active' :
+                                                        (user.status.name() == 'INACTIVE' ? 'status-inactive' : 'status-suspended')}"
+                                      th:text="${user.status}"></span>
+                            </td>
+                            <td th:text="${#temporals.format(user.createdAt, 'yyyy-MM-dd HH:mm:ss')}"></td>
+                            <td>
+                                <div class="action-group">
+                                    <a th:href="@{'/user-scs/' + ${user.userId} + '/orders'}" class="btn btn-sm btn-secondary">查看订单</a>
+                                    <form th:action="@{'/user-scs/delete/' + ${user.userId}}" method="post"
+                                          onsubmit="return confirm('确定删除? 将发布UserDeleted事件通知Order SCS');">
+                                        <button type="submit" class="btn btn-sm btn-danger">删除</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3>跨SCS通信说明</h3>
+                <div class="info-box">
+                    <p><strong>当前SCS:</strong> User SCS (用户服务)</p>
+                    <p><strong>数据存储:</strong> USER_SCS_DB (独立数据库，其他SCS不可访问)</p>
+                    <p><strong>发布事件:</strong> UserCreated, UserDeleted -> Order SCS 订阅</p>
+                    <p><strong>触发流程:</strong> 创建用户 -> 自动发布事件 -> Order SCS消费 -> 创建默认订单</p>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>User SCS - 端口: 8100 | 路径前缀: /user-scs/</p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GraalVM Native Image - JVM vs Native Comparison</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>JVM vs Native Image</h1>
+        <p class="subtitle">Comprehensive Performance and Architecture Comparison</p>
+        <div class="nav-links">
+            <a href="/">Performance</a>
+            <a href="/compare" class="active">Compare</a>
+            <a href="/api/perf/metrics">API</a>
+            <a href="/actuator/health">Health</a>
+        </div>
+    </header>
+
+    <section class="compare-section">
+        <h2>Startup Time</h2>
+        <div class="compare-table-wrap">
+            <table class="compare-table">
+                <thead>
+                    <tr><th>Scenario</th><th>Native Image</th><th>JVM HotSpot</th><th>Advantage</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Minimal App</td>
+                        <td class="native-wins">5-30 ms</td>
+                        <td>500-2000 ms</td>
+                        <td class="native-wins">50-100x faster</td>
+                    </tr>
+                    <tr>
+                        <td>Spring Boot (web)</td>
+                        <td class="native-wins">20-80 ms</td>
+                        <td>2000-5000 ms</td>
+                        <td class="native-wins">25-100x faster</td>
+                    </tr>
+                    <tr>
+                        <td>With Dependencies</td>
+                        <td class="native-wins">30-150 ms</td>
+                        <td>3000-8000 ms</td>
+                        <td class="native-wins">30-80x faster</td>
+                    </tr>
+                    <tr>
+                        <td>Cold Start (Serverless)</td>
+                        <td class="native-wins">50-200 ms</td>
+                        <td>5000-15000 ms</td>
+                        <td class="native-wins">25-100x faster</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="compare-section">
+        <h2>Memory Usage (RSS)</h2>
+        <div class="memory-chart">
+            <div class="bar-group">
+                <div class="bar-item native">
+                    <div class="bar" style="height: 15%"></div>
+                    <div class="bar-label">Native Image</div>
+                    <div class="bar-value">40-80 MB</div>
+                </div>
+                <div class="bar-item jvm">
+                    <div class="bar" style="height: 70%"></div>
+                    <div class="bar-label">JVM (-Xmx512m)</div>
+                    <div class="bar-value">200-400 MB</div>
+                </div>
+                <div class="bar-item jvm">
+                    <div class="bar" style="height: 100%"></div>
+                    <div class="bar-label">JVM (Default)</div>
+                    <div class="bar-value">300-600 MB</div>
+                </div>
+            </div>
+            <p class="chart-note">Lower is better. Native Image uses 3-6x less memory.</p>
+        </div>
+    </section>
+
+    <section class="compare-section">
+        <h2>Deployment Size</h2>
+        <div class="deployment-cards">
+            <div class="deploy-card">
+                <h3>Native Image</h3>
+                <div class="deploy-icon">&#128640;</div>
+                <ul>
+                    <li>Single executable: 60-120MB</li>
+                    <li>No runtime needed</li>
+                    <li>Container base: scratch/distroless</li>
+                    <li>Image size: 50-100MB</li>
+                    <li>Instant startup</li>
+                </ul>
+            </div>
+            <div class="deploy-card">
+                <h3>JVM</h3>
+                <div class="deploy-icon">&#128187;</div>
+                <ul>
+                    <li>Fat JAR: 20-60MB</li>
+                    <li>JVM required (150MB+)</li>
+                    <li>Container base: eclipse-temurin:21</li>
+                    <li>Image size: 250-500MB</li>
+                    <li>Seconds startup</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="compare-section">
+        <h2>Throughput Over Time</h2>
+        <div class="throughput-chart">
+            <svg viewBox="0 0 400 200" class="throughput-svg">
+                <!-- Y axis -->
+                <line x1="50" y1="20" x2="50" y2="180" stroke="#444" stroke-width="1"/>
+                <!-- X axis -->
+                <line x1="50" y1="180" x2="380" y2="180" stroke="#444" stroke-width="1"/>
+
+                <!-- JVM curve (warms up) -->
+                <path d="M60,170 L80,165 L100,150 L120,130 L140,115 L160,105 L180,100 L220,95 L260,92 L300,90 L340,88 L370,88"
+                      fill="none" stroke="#2196f3" stroke-width="2.5" stroke-linecap="round"/>
+
+                <!-- Native curve (instant peak) -->
+                <path d="M60,90 L80,90 L100,90 L140,92 L180,92 L220,90 L260,90 L300,88 L340,88 L370,88"
+                      fill="none" stroke="#00c853" stroke-width="2.5" stroke-linecap="round"/>
+
+                <!-- Labels -->
+                <text x="50" y="15" fill="#aaa" font-size="9">100%</text>
+                <text x="50" y="95" fill="#aaa" font-size="9">90%</text>
+                <text x="50" y="180" fill="#aaa" font-size="9">0%</text>
+                <text x="60" y="195" fill="#aaa" font-size="9">0s</text>
+                <text x="200" y="195" fill="#aaa" font-size="9">Time</text>
+                <text x="340" y="195" fill="#aaa" font-size="9">steady</text>
+            </svg>
+            <div class="legend">
+                <span class="legend-item"><span class="legend-color jvm"></span> JVM (JIT warmup)</span>
+                <span class="legend-item"><span class="legend-color native"></span> Native (instant)</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="compare-section">
+        <h2>Use Case Recommendations</h2>
+        <div class="recommendation-grid">
+            <div class="rec-card recommended">
+                <h3>AWS Lambda</h3>
+                <div class="rec-verdict">Use Native Image</div>
+                <p>Cold start is critical. Native Image cold start is 50-200ms vs JVM's 5-15s.</p>
+            </div>
+            <div class="rec-card recommended">
+                <h3>Kubernetes Microservices</h3>
+                <div class="rec-verdict">Use Native Image</div>
+                <p>Fast pod start, low memory, high density per node.</p>
+            </div>
+            <div class="rec-card mixed">
+                <h3>High Throughput APIs</h3>
+                <div class="rec-verdict">JVM May Be Better</div>
+                <p>JVM JIT achieves slightly higher peak throughput after warmup.</p>
+            </div>
+            <div class="rec-card mixed">
+                <h3>Batch Processing</h3>
+                <div class="rec-verdict">Evaluate Both</div>
+                <p>Short-lived: Native wins. Long-running: JVM JIT may optimize better.</p>
+            </div>
+            <div class="rec-card recommended">
+                <h3>CLI Tools</h3>
+                <div class="rec-verdict">Use Native Image</div>
+                <p>Instant startup, single binary distribution, no JVM dependency.</p>
+            </div>
+            <div class="rec-card mixed">
+                <h3>Legacy Integration</h3>
+                <div class="rec-verdict">JVM Likely</div>
+                <p>Some legacy libraries don't support native image compilation easily.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p><a href="/api/perf/comparison">Comparison Data (JSON)</a> | <a href="/">Performance Panel</a></p>
+    </footer>
+</div>
+<script th:src="@{/js/compare.js}"></script>
+</body>
+</html>

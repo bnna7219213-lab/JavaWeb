@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>订单管理 - HTMX 进阶</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+<nav class="navbar">
+    <div class="nav-brand">HTMX 超媒体驱动进阶</div>
+    <div class="nav-links">
+        <a href="/">仪表盘</a>
+        <a href="/users">用户管理</a>
+        <a href="/orders" class="active">订单管理</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="page-header">
+        <h1>订单管理</h1>
+        <span class="badge">共 <span th:text="${orderCount}">0</span> 笔</span>
+    </div>
+
+    <!-- 筛选 + 新建 -->
+    <div class="action-bar">
+        <div class="filter-group">
+            <label>筛选用户：</label>
+            <select id="user-filter">
+                <option value="">全部订单</option>
+                <option th:each="u : ${users}"
+                        th:value="${u.id}"
+                        th:text="${u.name}">张三</option>
+            </select>
+        </div>
+        <button class="btn btn-success"
+                hx-get="/orders/new"
+                hx-target="#form-container"
+                hx-swap="innerHTML">
+            + 新建订单
+        </button>
+    </div>
+
+    <!-- 表单容器 -->
+    <div id="form-container"></div>
+
+    <!-- 订单表格 -->
+    <div id="order-table" th:insert="~{order/fragments :: orderTable}">
+    </div>
+
+    <!-- 反馈消息 -->
+    <div id="toast-container"></div>
+</div>
+
+<script>
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        if (evt.detail.pathInfo &&
+            evt.detail.pathInfo.finalPath &&
+            evt.detail.pathInfo.finalPath.includes('/orders/') &&
+            evt.detail.requestConfig &&
+            evt.detail.requestConfig.method === 'DELETE') {
+            showToast('订单已删除', 'success');
+        }
+    });
+
+    function showToast(message, type) {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = 'toast toast-' + type;
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(function() {
+            toast.classList.add('toast-hide');
+            setTimeout(function() { toast.remove(); }, 300);
+        }, 2500);
+    }
+
+    document.getElementById('user-filter').addEventListener('change', function() {
+        var userId = this.value;
+        if (userId) {
+            htmx.ajax('GET', '/orders/by-user/' + userId, {target: '#order-table', swap: 'innerHTML'});
+        } else {
+            htmx.ajax('GET', '/orders/table', {target: '#order-table', swap: 'innerHTML'});
+        }
+    });
+</script>
+</body>
+</html>

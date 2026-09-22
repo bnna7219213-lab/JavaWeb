@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>HTMX 进阶 - 仪表盘</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+<nav class="navbar">
+    <div class="nav-brand">HTMX 超媒体驱动进阶</div>
+    <div class="nav-links">
+        <a href="/" class="active">仪表盘</a>
+        <a href="/users">用户管理</a>
+        <a href="/orders">订单管理</a>
+    </div>
+</nav>
+
+<div class="container">
+    <h1>系统仪表盘</h1>
+    <p class="subtitle">HTMX 完整 CRUD 系统 | 高级特性演示</p>
+
+    <!-- 统计卡片 -->
+    <div class="stats-grid">
+        <div class="stat-card stat-card-blue">
+            <div class="stat-icon">USERS</div>
+            <div class="stat-info">
+                <span class="stat-number" th:text="${userCount}">0</span>
+                <span class="stat-label">用户总数</span>
+            </div>
+        </div>
+        <div class="stat-card stat-card-green">
+            <div class="stat-icon">ORDER</div>
+            <div class="stat-info">
+                <span class="stat-number" th:text="${orderCount}">0</span>
+                <span class="stat-label">订单总数</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 最近数据 -->
+    <div class="dashboard-grid">
+        <section class="card">
+            <h2>最近用户</h2>
+            <table class="data-table">
+                <thead>
+                    <tr><th>ID</th><th>姓名</th><th>邮箱</th></tr>
+                </thead>
+                <tbody>
+                    <tr th:each="user : ${recentUsers}">
+                        <td th:text="${user.id}">1</td>
+                        <td th:text="${user.name}">张三</td>
+                        <td th:text="${user.email}">test@example.com</td>
+                    </tr>
+                </tbody>
+            </table>
+            <a href="/users" class="btn btn-primary" style="margin-top: 12px;">查看全部 ></a>
+        </section>
+
+        <section class="card">
+            <h2>最近订单</h2>
+            <table class="data-table">
+                <thead>
+                    <tr><th>订单号</th><th>产品</th><th>金额</th></tr>
+                </thead>
+                <tbody>
+                    <tr th:each="order : ${recentOrders}">
+                        <td th:text="${order.orderNo}">ORD001</td>
+                        <td th:text="${order.productName}">MacBook</td>
+                        <td th:text="${'¥' + order.amount}">¥14999</td>
+                    </tr>
+                </tbody>
+            </table>
+            <a href="/orders" class="btn btn-primary" style="margin-top: 12px;">查看全部 ></a>
+        </section>
+    </div>
+
+    <!-- HTMX 事件监听演示 -->
+    <section class="card">
+        <h2>HTMX 事件监听</h2>
+        <p>监听 HTMX 全局事件，请求日志实时显示：</p>
+        <div id="event-log" class="event-log-box">
+            <p class="placeholder">HTMX 事件将记录在这里...</p>
+        </div>
+    </section>
+</div>
+
+<script>
+    document.body.addEventListener('htmx:beforeRequest', function(evt) {
+        var log = document.getElementById('event-log');
+        var time = new Date().toLocaleTimeString();
+        log.insertAdjacentHTML('afterbegin',
+            '<div class="log-entry">[INFO] ' + time + ' | htmx:beforeRequest | ' + evt.detail.requestConfig.path + '</div>'
+        );
+    });
+
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        var log = document.getElementById('event-log');
+        var time = new Date().toLocaleTimeString();
+        log.insertAdjacentHTML('afterbegin',
+            '<div class="log-entry log-success">[INFO] ' + time + ' | htmx:afterSwap | DOM updated</div>'
+        );
+    });
+
+    document.body.addEventListener('htmx:responseError', function(evt) {
+        var log = document.getElementById('event-log');
+        var time = new Date().toLocaleTimeString();
+        log.insertAdjacentHTML('afterbegin',
+            '<div class="log-entry log-error">[ERROR] ' + time + ' | Status: ' + evt.detail.xhr.status + '</div>'
+        );
+    });
+</script>
+</body>
+</html>

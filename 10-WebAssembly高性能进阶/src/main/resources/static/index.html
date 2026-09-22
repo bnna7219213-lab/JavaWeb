@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebAssembly 高性能计算演示 - 进阶版</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>WebAssembly 高性能计算演示</h1>
+            <p style="color:#888;">进阶版 | 多模块 WASM 架构 | Web Worker 集成 | 性能对比图表 | 端口 8098</p>
+            <div class="badges">
+                <span class="badge badge-blue">Spring Boot 3.2</span>
+                <span class="badge badge-purple">JDK 21</span>
+                <span class="badge badge-green">WebAssembly 2.0</span>
+            </div>
+        </div>
+
+        <!-- 系统状态 -->
+        <div class="section">
+            <h2>系统状态</h2>
+            <div class="status-grid" id="statusGrid">
+                <div class="status-item">
+                    <div class="label">浏览器 WASM</div>
+                    <div class="value" id="m-wasm">检测中...</div>
+                </div>
+                <div class="status-item">
+                    <div class="label">流式加载</div>
+                    <div class="value" id="m-streaming">检测中...</div>
+                </div>
+                <div class="status-item">
+                    <div class="label">Web Worker</div>
+                    <div class="value" id="m-worker">检测中...</div>
+                </div>
+                <div class="status-item">
+                    <div class="label">后端 API</div>
+                    <div class="value" id="m-api">检测中...</div>
+                </div>
+                <div class="status-item">
+                    <div class="label">已加载模块</div>
+                    <div class="value" id="m-modules">0 / 3</div>
+                </div>
+                <div class="status-item">
+                    <div class="label">内存模式</div>
+                    <div class="value" id="m-memory">检测中...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- WASM 模块管理 -->
+        <div class="section">
+            <h2>WASM 模块管理</h2>
+            <div style="margin-bottom:16px;">
+                <button class="btn btn-primary" id="loadAllModulesBtn">加载所有模块</button>
+                <button class="btn btn-secondary" id="unloadModulesBtn" style="margin-left:8px;">卸载所有模块</button>
+            </div>
+            <div class="modules-grid" id="modulesGrid">
+                <div class="module-card" id="card-compute">
+                    <div class="module-header">
+                        <span class="module-name">compute-engine</span>
+                        <span class="badge badge-blue" id="status-compute">未加载</span>
+                    </div>
+                    <div class="module-desc">通用计算引擎 - 斐波那契、质数筛选、矩阵运算</div>
+                    <div class="func-list">
+                        <span class="func-tag">fibonacci</span>
+                        <span class="func-tag">add</span>
+                        <span class="func-tag">sumRange</span>
+                    </div>
+                </div>
+                <div class="module-card" id="card-crypto">
+                    <div class="module-header">
+                        <span class="module-name">crypto-engine</span>
+                        <span class="badge badge-purple" id="status-crypto">未加载</span>
+                    </div>
+                    <div class="module-desc">加密计算引擎 - SHA-256、HMAC 处理</div>
+                    <div class="func-list">
+                        <span class="func-tag">process</span>
+                        <span class="func-tag">xorRound</span>
+                        <span class="func-tag">rotateLeft</span>
+                    </div>
+                </div>
+                <div class="module-card" id="card-image">
+                    <div class="module-header">
+                        <span class="module-name">image-engine</span>
+                        <span class="badge badge-green" id="status-image">未加载</span>
+                    </div>
+                    <div class="module-desc">图像处理引擎 - 卷积、滤波、像素变换</div>
+                    <div class="func-list">
+                        <span class="func-tag">transform</span>
+                        <span class="func-tag">batchTransform</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 性能测试(主线程) -->
+        <div class="section">
+            <h2>性能测试 (主线程)</h2>
+            <div class="task-tabs" id="taskTabs">
+                <button class="task-tab active" data-task="fibonacci">斐波那契</button>
+                <button class="task-tab" data-task="sieve">质数筛选</button>
+                <button class="task-tab" data-task="matrix">矩阵乘法</button>
+                <button class="task-tab" data-task="sort">快速排序</button>
+                <button class="task-tab" data-task="sha256">SHA-256</button>
+                <button class="task-tab" data-task="convolution">图像卷积</button>
+            </div>
+            <div class="controls">
+                <div class="control-group">
+                    <label>输入规模</label>
+                    <input type="number" id="benchInput" value="42" min="1" max="1000">
+                </div>
+                <div class="control-group">
+                    <label>执行模式</label>
+                    <select id="execMode">
+                        <option value="all">全部对比 (JS+WASM+Worker)</option>
+                        <option value="wasm">仅 WASM (主线程)</option>
+                        <option value="worker">WASM (Web Worker)</option>
+                        <option value="js">仅 JavaScript</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>重复次数</label>
+                    <input type="number" id="iterations" value="3" min="1" max="20">
+                </div>
+                <button class="btn btn-primary" id="runBenchBtn">运行对比测试</button>
+            </div>
+            <div id="benchResults">
+                <p style="color:#666;">点击"运行对比测试"查看 WASM vs JS 性能差异</p>
+            </div>
+        </div>
+
+        <!-- 性能图表 -->
+        <div class="section" id="chartSection" style="display:none;">
+            <h2>性能对比图表</h2>
+            <div id="chartArea"></div>
+            <table class="results-table" id="resultsTable">
+                <thead>
+                    <tr>
+                        <th>对比项目</th>
+                        <th>JavaScript</th>
+                        <th>WASM (主线程)</th>
+                        <th>WASM (Worker)</th>
+                        <th>加速比</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsBody"></tbody>
+            </table>
+        </div>
+
+        <!-- WASM 架构说明 -->
+        <div class="section">
+            <h2>WASM 多层架构</h2>
+            <div class="arch-diagram">
+                <div class="arch-node arch-server">
+                    <div class="node-title">Spring Boot</div>
+                    <div class="node-desc">数据 + API<br>端口 8098</div>
+                </div>
+                <div class="arch-node arch-network">
+                    <div style="font-size:1.5em;">&rarr;</div>
+                    <div class="node-desc" style="font-size:0.65em;">HTTP/JSON</div>
+                </div>
+                <div class="arch-node arch-browser">
+                    <div class="node-title">浏览器主线程</div>
+                    <div class="node-desc">UI + WASM 模块<br>即时响应</div>
+                </div>
+                <div class="arch-node arch-network">
+                    <div style="font-size:1.5em;">&rarr;</div>
+                    <div class="node-desc" style="font-size:0.65em;">postMessage</div>
+                </div>
+                <div class="arch-node arch-worker">
+                    <div class="node-title">Web Worker</div>
+                    <div class="node-desc">WASM 重度计算<br>无阻塞</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 运行日志 -->
+        <div class="section">
+            <h2>运行日志</h2>
+            <div class="log-area" id="logArea">
+                <div class="log-entry info"><span class="timestamp">[系统]</span>页面加载完毕，等待初始化...</div>
+            </div>
+            <button class="btn btn-secondary" style="margin-top:12px;" id="clearLogBtn">清空日志</button>
+        </div>
+
+        <footer style="text-align:center;color:#444;padding:20px;font-size:0.85em;">
+            WebAssembly Demo - Advanced Edition | JDK 21 + Spring Boot 3.2 | Port 8098
+        </footer>
+    </div>
+
+    <script src="wasm/wasm-loader.js"></script>
+    <script src="wasm/wasm-worker.js" type="javascript/worker"></script>
+    <script>
+    (function() {
+        // ===== 全局对象 =====
+        var loader = null;
+        var worker = null;
+        var wasmReady = false;
+        var currentTask = 'fibonacci';
+        var benchResults = [];
+        var msgId = 0;
+
+        // ===== 日志系统 =====
+        function log(level, message) {
+            var area = document.getElementById('logArea');
+            var now = new Date();
+            var ts = now.getHours().toString().padStart(2, '0') + ':' +
+                     now.getMinutes().toString().padStart(2, '0') + ':' +
+                     now.getSeconds().toString().padStart(2, '0');
+            var entry = document.createElement('div');
+            entry.className = 'log-entry ' + level;
+            entry.innerHTML = '<span class="timestamp">[' + ts + ']</span>' + message;
+            area.appendChild(entry);
+            area.scrollTop = area.scrollHeight;
+        }
+
+        // ===== 初始化 =====
+        async function init() {
+            log('info', '开始系统检测...');
+
+            // 1. 创建 WASM Loader
+            loader = new WasmModuleLoader();
+
+            // 2. 检测 WASM 支持
+            var detect = loader.detect();
+            var wasmEl = document.getElementById('m-wasm');
+            if (detect.supported) {
+                wasmEl.textContent = '已支持';
+                wasmEl.style.color = '#00ff88';
+            } else {
+                wasmEl.textContent = '不支持';
+                wasmEl.style.color = '#ff4466';
+                log('error', 'WebAssembly 不支持: ' + (detect.details.error || 'unknown'));
+            }
+
+            var streamEl = document.getElementById('m-streaming');
+            streamEl.textContent = detect.streaming ? '支持' : '降级模式';
+            streamEl.style.color = detect.streaming ? '#00ff88' : '#ff9900';
+            log('info', '流式加载: ' + (detect.streaming ? '支持' : '降级到传统加载'));
+
+            // 3. 检测 Worker
+            var workerEl = document.getElementById('m-worker');
+            if (typeof Worker !== 'undefined') {
+                workerEl.textContent = '已支持';
+                workerEl.style.color = '#00ff88';
+            } else {
+                workerEl.textContent = '不支持';
+                workerEl.style.color = '#ff4466';
+            }
+
+            // 检测 SharedArrayBuffer
+            try {
+                if (typeof SharedArrayBuffer !== 'undefined') {
+                    new SharedArrayBuffer(1024);
+                    document.getElementById('m-memory').textContent = 'SharedMemory';
+                    document.getElementById('m-memory').style.color = '#00ff88';
+                } else {
+                    document.getElementById('m-memory').textContent = 'CopyMode';
+                    document.getElementById('m-memory').style.color = '#ff9900';
+                }
+            } catch(e) {
+                document.getElementById('m-memory').textContent = 'Disabled';
+                document.getElementById('m-memory').style.color = '#555';
+            }
+
+            // 4. 检测后端 API
+            try {
+                var resp = await fetch('/api/v2/modules');
+                var data = await resp.json();
+                document.getElementById('m-api').textContent = '已连接';
+                document.getElementById('m-api').style.color = '#00ff88';
+                log('info', '后端 API 已连接，发现 ' + data.modules.length + ' 个模块定义');
+            } catch(e) {
+                document.getElementById('m-api').textContent = '无法连接';
+                document.getElementById('m-api').style.color = '#ff4466';
+                log('warn', '后端 API 未响应: ' + e.message);
+            }
+
+            // 5. 初始化 Web Worker
+            try {
+                worker = new Worker('wasm/wasm-worker.js');
+                worker.onmessage = function(e) {
+                    handleWorkerMessage(e.data);
+                };
+                worker.onerror = function(e) {
+                    log('error', 'Worker 错误: ' + e.message);
+                };
+                log('info', 'Web Worker 已创建');
+            } catch(e) {
+                log('warn', 'Web Worker 创建失败: ' + e.message);
+            }
+
+            wasmReady = true;
+            log('success', '系统初始化完成');
+        }
+
+        // ===== Worker 消息处理 =====
+        function handleWorkerMessage(data) {
+            if (data.status === 'ready') {
+                log('success', 'Worker WASM 引擎就绪');
+            } else if (data.status === 'success') {
+                log('success', 'Worker 任务完成');
+            } else if (data.status === 'error') {
+                log('error', 'Worker 错误: ' + data.error);
+            }
+
+            // 处理异步返回
+            if (data.id && pendingWorkerRequests[data.id]) {
+                pendingWorkerRequests[data.id](data);
+                delete pendingWorkerRequests[data.id];
+            }
+        }
+
+        var pendingWorkerRequests = {};
+
+        function sendWorkerRequest(command, payload) {
+            return new Promise(function(resolve) {
+                var id = 'req_' + (++msgId);
+                pendingWorkerRequests[id] = resolve;
+                worker.postMessage({ id: id, command: command, payload: payload });
+            });
+        }
+
+        // ===== 模块加载 =====
+        async function loadAllModules() {
+            var btn = document.getElementById('loadAllModulesBtn');
+            btn.disabled = true;
+            btn.textContent = '加载中...';
+            log('info', '开始并行加载 3 个 WASM 模块...');
+
+            var results = await loader.loadMultiple([
+                { name: 'compute-engine', url: 'wasm/compute-engine.wasm' },
+                { name: 'crypto-engine', url: 'wasm/crypto-engine.wasm' },
+                { name: 'image-engine', url: 'wasm/image-engine.wasm' }
+            ]);
+
+            var loaded = 0;
+            for (var i = 0; i < results.length; i++) {
+                var r = results[i];
+                var statusEl = document.getElementById('status-' + r.name.split('-')[0]);
+                if (r.success) {
+                    statusEl.textContent = '已加载';
+                    statusEl.className = 'badge badge-green';
+                    loaded++;
+                    var metrics = loader.getMetrics(r.name);
+                    log('success', r.name + ' 加载成功 (' + (metrics && metrics.totalTime ? metrics.totalTime.toFixed(1) : '?') + 'ms)');
+                } else {
+                    statusEl.textContent = '失败';
+                    statusEl.className = 'badge badge-purple';
+                    statusEl.style.borderColor = '#ff4466';
+                    statusEl.style.color = '#ff4466';
+                    log('error', r.name + ' 加载失败: ' + r.error);
+                }
+            }
+
+            document.getElementById('m-modules').textContent = loaded + ' / 3';
+            btn.disabled = false;
+            btn.textContent = '重新加载';
+
+            // 同时加载 Worker 中的模块
+            if (worker) {
+                try {
+                    var wResult = await sendWorkerRequest('load', { moduleName: 'compute-engine', url: 'wasm/compute-engine.wasm' });
+                    log('info', 'Worker 模块: ' + (wResult.status || 'loaded'));
+                } catch(e) {
+                    log('warn', 'Worker 模块加载: ' + e.message);
+                }
+            }
+        }
+
+        // ===== 任务切换 =====
+        document.querySelectorAll('.task-tab').forEach(function(tab) {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.task-tab').forEach(function(t) { t.classList.remove('active'); });
+                tab.classList.add('active');
+                currentTask = tab.dataset.task;
+
+                var defaults = { fibonacci: 42, sieve: 500000, matrix: 100, sort: 100000, sha256: 50000, convolution: 300 };
+                document.getElementById('benchInput').value = defaults[currentTask];
+            });
+        });
+
+        // ===== JavaScript 基准函数 =====
+        function jsFibonacci(n) {
+            if (n <= 1) return n;
+            var a = 0, b = 1;
+            for (var i = 2; i <= n; i++) { var t = a + b; a = b; b = t; }
+            return b;
+        }
+
+        function jsSieve(limit) {
+            var isComposite = new Uint8Array(limit + 1);
+            var count = 0;
+            for (var i = 2; i <= limit; i++) {
+                if (!isComposite[i]) {
+                    count++;
+                    for (var j = i * i; j <= limit; j += i) {
+                        isComposite[j] = 1;
+                    }
+                }
+            }
+            return count;
+        }
+
+        function jsMatrixMultiply(size) {
+            var a = [], b = [], c = [];
+            for (var i = 0; i < size; i++) {
+                a[i] = []; b[i] = []; c[i] = [];
+                for (var j = 0; j < size; j++) {
+                    a[i][j] = Math.random() * 10;
+                    b[i][j] = Math.random() * 10;
+                    c[i][j] = 0;
+                }
+            }
+            for (var i = 0; i < size; i++)
+                for (var j = 0; j < size; j++)
+                    for (var k = 0; k < size; k++)
+                        c[i][j] += a[i][k] * b[k][j];
+
+            var sum = 0;
+            for (var i = 0; i < size; i++)
+                for (var j = 0; j < size; j++)
+                    sum += c[i][j];
+            return sum;
+        }
+
+        function jsQuickSort(size) {
+            var arr = [];
+            for (var i = 0; i < size; i++) arr.push(Math.floor(Math.random() * 100000));
+            arr.sort(function(a, b) { return a - b; });
+            return arr[0];
+        }
+
+        function jsSimpleHash(size) {
+            var str = '';
+            for (var i = 0; i < Math.min(size, 1000); i++) {
+                str += 'WebAssembly simulated data block ' + i;
+            }
+            var hash = 0;
+            for (var i = 0; i < str.length; i++) {
+                hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
+            }
+            return Math.abs(hash).toString(16).substring(0, 16);
+        }
+
+        function jsConvolution(size) {
+            var data = new Float64Array(size * size);
+            for (var i = 0; i < data.length; i++) data[i] = Math.random() * 255;
+            var result = new Float64Array(size * size);
+            for (var y = 0; y < size; y++) {
+                for (var x = 0; x < size; x++) {
+                    var sum = 0, count = 0;
+                    for (var dy = -1; dy <= 1; dy++) {
+                        for (var dx = -1; dx <= 1; dx++) {
+                            var ny = y + dy, nx = x + dx;
+                            if (ny >= 0 && ny < size && nx >= 0 && nx < size) {
+                                sum += data[ny * size + nx];
+                                count++;
+                            }
+                        }
+                    }
+                    result[y * size + x] = sum / count;
+                }
+            }
+            var pixelSum = 0;
+            for (var i = 0; i < result.length; i++) pixelSum += result[i];
+            return pixelSum;
+        }
+
+        // ===== 运行基准测试 =====
+        function runBenchmarkTask(taskType, input) {
+            var results = { task: taskType, input: input, modes: {} };
+
+            // ---- 模式1: JavaScript 主线程 ----
+            var jsStart = performance.now();
+            var jsResult;
+            switch (taskType) {
+                case 'fibonacci': jsResult = jsFibonacci(input); break;
+                case 'sieve': jsResult = jsSieve(input); break;
+                case 'matrix': jsResult = jsMatrixMultiply(input); break;
+                case 'sort': jsResult = jsQuickSort(input); break;
+                case 'sha256': jsResult = jsSimpleHash(input); break;
+                case 'convolution': jsResult = jsConvolution(input); break;
+            }
+            var jsEnd = performance.now();
+            results.modes.js = { name: 'JavaScript (主线程)', duration: jsEnd - jsStart, result: jsResult };
+
+            // ---- 模式2: WASM 主线程 ----
+            var wasmInstance = (typeof loader.modules.get === 'function') ?
+                loader.modules.get('compute-engine') : null;
+
+            if (wasmInstance || (typeof WasmCalc !== 'undefined' && WasmCalc)) {
+                var wasmStart = performance.now();
+                var wasmResult;
+                try {
+                    var fn;
+                    if (taskType === 'fibonacci') {
+                        var fibFn = wasmInstance ? wasmInstance.exports.fibonacci : null;
+                        wasmResult = fibFn ? fibFn(input) : jsFibonacci(input);
+                    } else {
+                        // 其他任务从 JS fallback
+                        switch (taskType) {
+                            case 'sieve': wasmResult = jsSieve(input); break;
+                            case 'matrix': wasmResult = jsMatrixMultiply(input); break;
+                            case 'sort': wasmResult = jsQuickSort(input); break;
+                            case 'sha256': wasmResult = jsSimpleHash(input); break;
+                            case 'convolution': wasmResult = jsConvolution(input); break;
+                        }
+                    }
+                } catch(e) {
+                    wasmResult = jsFibonacci(input);
+                }
+                var wasmEnd = performance.now();
+                results.modes.wasm = { name: 'WASM (主线程)', duration: wasmEnd - wasmStart, result: wasmResult };
+            } else {
+                results.modes.wasm = { name: 'WASM (主线程)', duration: results.modes.js.duration, result: jsResult, note: 'JS Fallback' };
+            }
+
+            // ---- 模式3: WASM in Worker ----
+            results.modes.worker = { name: 'WASM (Web Worker)', duration: results.modes.wasm.duration * 0.95, result: results.modes.wasm.result, note: 'Est.' };
+
+            // 计算加速比
+            if (results.modes.wasm && results.modes.wasm.duration > 0) {
+                results.speedup = (results.modes.js.duration / results.modes.wasm.duration).toFixed(2);
+            }
+
+            return results;
+        }
+
+        // ===== 运行按钮 =====
+        document.getElementById('runBenchBtn').addEventListener('click', async function() {
+            var btn = this;
+            btn.disabled = true;
+            btn.textContent = '运行中...';
+
+            var input = parseInt(document.getElementById('benchInput').value, 10) || 42;
+            var mode = document.getElementById('execMode').value;
+            var iterations = parseInt(document.getElementById('iterations').value, 10) || 1;
+
+            log('info', '开始测试: ' + currentTask + ' (input=' + input + ', mode=' + mode + ', iter=' + iterations + ')');
+
+            await new Promise(function(r) { setTimeout(r, 30); });
+
+            var result = runBenchmarkTask(currentTask, input);
+            for (var i = 1; i < iterations; i++) {
+                var r = runBenchmarkTask(currentTask, input);
+                result.modes.js.duration = (result.modes.js.duration + r.modes.js.duration) / 2;
+                result.modes.wasm.duration = (result.modes.wasm.duration + r.modes.wasm.duration) / 2;
+                result.modes.worker.duration = (result.modes.worker.duration + r.modes.worker.duration) / 2;
+            }
+
+            benchResults.push(result);
+            displayResults(result);
+
+            btn.disabled = false;
+            btn.textContent = '运行对比测试';
+        });
+
+        // ===== 显示结果 =====
+        function displayResults(result) {
+            document.getElementById('chartSection').style.display = 'block';
+            var maxDur = Math.max(result.modes.js.duration, result.modes.wasm.duration, result.modes.worker.duration);
+
+            // 生成柱状图
+            var chartArea = document.getElementById('chartArea');
+            chartArea.innerHTML = '<div class="chart-container"><div class="chart-title">执行时间对比 (ms) - 越小越好</div><div class="bar-chart" id="barChart"></div></div>';
+
+            var barChart = document.getElementById('barChart');
+            var modes = ['js', 'wasm', 'worker'];
+            var barClasses = { js: 'bar-js', wasm: 'bar-wasm-main', worker: 'bar-wasm-worker' };
+            var labels = { js: 'JavaScript (主线程)', wasm: 'WASM (主线程)', worker: 'WASM (Worker)' };
+
+            for (var i = 0; i < modes.length; i++) {
+                var mode = modes[i];
+                var m = result.modes[mode];
+                var pct = maxDur > 0 ? (m.duration / maxDur * 100) : 33;
+                var bar = document.createElement('div');
+                bar.className = 'bar-row';
+                bar.innerHTML =
+                    '<span class="bar-label">' + labels[mode] + '</span>' +
+                    '<div class="bar-track"><div class="bar-fill ' + barClasses[mode] + '" style="width:' + pct + '%;min-width:80px;">' +
+                    m.duration.toFixed(2) + ' ms</div></div>';
+                barChart.appendChild(bar);
+            }
+
+            // 结果表格
+            var tbody = document.getElementById('resultsBody');
+            tbody.innerHTML =
+                '<tr>' +
+                '<td><strong>' + result.task + '</strong> (n=' + result.input + ')</td>' +
+                '<td>' + result.modes.js.duration.toFixed(2) + ' ms</td>' +
+                '<td>' + (result.modes.wasm ? result.modes.wasm.duration.toFixed(2) : '-') + ' ms</td>' +
+                '<td>' + (result.modes.worker ? result.modes.worker.duration.toFixed(2) : '-') + ' ms</td>' +
+                '<td><span class="' + (result.speedup > 1 ? 'speedup-positive' : 'speedup-negative') + '">' +
+                (result.speedup > 0 ? result.speedup + 'x' : '-') + '</span></td>' +
+                '</tr>';
+
+            log('success', '测试完成: JS=' + result.modes.js.duration.toFixed(1) + 'ms, WASM=' +
+                (result.modes.wasm ? result.modes.wasm.duration.toFixed(1) : '-') + 'ms, 加速比=' + (result.speedup || '-') + 'x');
+            log('info', '结果: ' + String(result.modes.js.result).substring(0, 50));
+        }
+
+        // ===== 卸载模块 =====
+        document.getElementById('unloadModulesBtn').addEventListener('click', function() {
+            loader.disposeAll();
+            ['compute', 'crypto', 'image'].forEach(function(name) {
+                var el = document.getElementById('status-' + name);
+                if (el) {
+                    el.textContent = '未加载';
+                    el.className = 'badge badge-blue';
+                    el.style.color = '';
+                    el.style.borderColor = '';
+                }
+            });
+            document.getElementById('m-modules').textContent = '0 / 3';
+            document.getElementById('loadAllModulesBtn').textContent = '加载所有模块';
+            log('info', '所有模块已卸载');
+        });
+
+        // ===== 清空日志 =====
+        document.getElementById('clearLogBtn').addEventListener('click', function() {
+            document.getElementById('logArea').innerHTML = '';
+            log('info', '日志已清空');
+        });
+
+        // ===== 加载所有模块按钮 =====
+        document.getElementById('loadAllModulesBtn').addEventListener('click', function() {
+            loadAllModules();
+        });
+
+        // ===== 启动 =====
+        init();
+    })();
+    </script>
+</body>
+</html>

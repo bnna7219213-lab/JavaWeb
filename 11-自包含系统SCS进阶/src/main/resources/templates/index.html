@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>SCS 进阶版 - 多SCS协同</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>SCS 进阶版</h1>
+            <p class="subtitle">多 Self-Contained System 协同工作</p>
+            <span class="badge">User SCS + Order SCS</span>
+        </header>
+
+        <nav class="nav">
+            <a th:href="@{/}" class="active">首页</a>
+            <a th:href="@{/user-scs/}">User SCS</a>
+            <a th:href="@{/user-scs/new}">创建用户</a>
+            <a th:href="@{/order-scs/}">Order SCS</a>
+            <a th:href="@{/order-scs/new}">创建订单</a>
+            <a th:href="@{/broker/}">消息中间件</a>
+        </nav>
+
+        <main class="content">
+            <div class="card">
+                <h2>SCS 多系统协同</h2>
+                <p>本项目演示多个SCS单元在一个架构中的协同工作。包含两个独立系统：</p>
+                <div class="scs-grid">
+                    <div class="scs-card">
+                        <h3>User SCS (用户SCS)</h3>
+                        <p>独立的系统单元，管理用户注册、查询、状态管理</p>
+                        <ul>
+                            <li>路径: /user-scs/</li>
+                            <li>API: /user-scs/api/v1/users</li>
+                            <li>数据库: USER_SCS_DB</li>
+                            <li>发布事件: UserCreated, UserDeleted</li>
+                        </ul>
+                        <a th:href="@{/user-scs/}" class="btn btn-primary">进入 User SCS</a>
+                    </div>
+                    <div class="scs-card scs-card-order">
+                        <h3>Order SCS (订单SCS)</h3>
+                        <p>独立的系统单元，管理订单创建、查询、关联</p>
+                        <ul>
+                            <li>路径: /order-scs/</li>
+                            <li>API: /order-scs/api/v1/orders</li>
+                            <li>数据库: ORDER_SCS_DB</li>
+                            <li>监听: UserCreated事件</li>
+                        </ul>
+                        <a th:href="@{/order-scs/}" class="btn btn-primary">进入 Order SCS</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>跨SCS异步通信流程</h2>
+                <div class="flow-diagram">
+                    <div class="flow-step">
+                        <div class="flow-num">1</div>
+                        <p>用户注册<br>(User SCS)</p>
+                    </div>
+                    <div class="flow-arrow">-></div>
+                    <div class="flow-step">
+                        <div class="flow-num">2</div>
+                        <p>存储到<br>USER_SCS_DB</p>
+                    </div>
+                    <div class="flow-arrow">-></div>
+                    <div class="flow-step">
+                        <div class="flow-num">3</div>
+                        <p>发布<br>UserCreated</p>
+                    </div>
+                    <div class="flow-arrow">-></div>
+                    <div class="flow-step">
+                        <div class="flow-num">4</div>
+                        <p>消息中间件<br>(模拟Kafka)</p>
+                    </div>
+                    <div class="flow-arrow">-></div>
+                    <div class="flow-step">
+                        <div class="flow-num">5</div>
+                        <p>Order SCS<br>消费事件</p>
+                    </div>
+                    <div class="flow-arrow">-></div>
+                    <div class="flow-step">
+                        <div class="flow-num">6</div>
+                        <p>创建默认订单<br>ORDER_SCS_DB</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>SCS 核心设计原则</h2>
+                <div class="principles">
+                    <div class="principle">
+                        <h3>数据隔离</h3>
+                        <p>每个SCS有独立数据库。User SCS的USER_SCS_DB和Order SCS的ORDER_SCS_DB完全隔离。</p>
+                    </div>
+                    <div class="principle">
+                        <h3>异步通信</h3>
+                        <p>服务间通过事件通信，而非同步HTTP。发布事件后不等待处理结果。</p>
+                    </div>
+                    <div class="principle">
+                        <h3>前端自包含</h3>
+                        <p>每个SCS有自己的前端UI，在不同路径前缀下提供服务。</p>
+                    </div>
+                    <div class="principle">
+                        <h3>独立部署能力</h3>
+                        <p>虽然这里在同一个jar中演示，但每个SCS可以独立打包为jar部署。</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>SCS Advanced | Port: <span th:text="${port}">8100</span> | JDK 21 + Spring Boot 3.x</p>
+        </footer>
+    </div>
+</body>
+</html>

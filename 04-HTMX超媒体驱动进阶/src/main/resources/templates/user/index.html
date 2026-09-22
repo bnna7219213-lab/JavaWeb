@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>用户管理 - HTMX 进阶</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+<nav class="navbar">
+    <div class="nav-brand">HTMX 超媒体驱动进阶</div>
+    <div class="nav-links">
+        <a href="/">仪表盘</a>
+        <a href="/users" class="active">用户管理</a>
+        <a href="/orders">订单管理</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="page-header">
+        <h1>用户管理</h1>
+        <span class="badge">共 <span th:text="${userCount}">0</span> 人</span>
+    </div>
+
+    <!-- 操作区：搜索 + 新建 -->
+    <div class="action-bar">
+        <div class="search-box">
+            <input type="text"
+                   name="keyword"
+                   placeholder="搜索用户名或邮箱..."
+                   hx-get="/users/search"
+                   hx-target="#user-table"
+                   hx-trigger="input changed delay:300ms"
+                   hx-indicator="#search-spinner">
+            <span id="search-spinner" class="htmx-indicator">搜索中...</span>
+        </div>
+        <button class="btn btn-success"
+                hx-get="/users/new"
+                hx-target="#form-container"
+                hx-swap="innerHTML">
+            + 新建用户
+        </button>
+    </div>
+
+    <!-- 表单容器（动态加载新建/编辑表单） -->
+    <div id="form-container"></div>
+
+    <!-- 用户表格 -->
+    <div id="user-table" th:insert="~{user/fragments :: userTable}">
+    </div>
+
+    <!-- 操作反馈消息 -->
+    <div id="toast-container"></div>
+</div>
+
+<script>
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        if (evt.detail.pathInfo &&
+            evt.detail.pathInfo.finalPath &&
+            evt.detail.pathInfo.finalPath.includes('/users/') &&
+            evt.detail.requestConfig &&
+            evt.detail.requestConfig.method === 'DELETE') {
+            showToast('用户已删除', 'success');
+        }
+    });
+
+    function showToast(message, type) {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = 'toast toast-' + type;
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(function() {
+            toast.classList.add('toast-hide');
+            setTimeout(function() { toast.remove(); }, 300);
+        }, 2500);
+    }
+</script>
+</body>
+</html>

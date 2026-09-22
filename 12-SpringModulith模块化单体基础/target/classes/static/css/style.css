@@ -1,0 +1,246 @@
+/* ============================================
+   Spring Modulith 模块化单体 - 基础版样式
+   ============================================ */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: #f0f2f5;
+    color: #333;
+    line-height: 1.6;
+}
+
+.header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem 3rem;
+    text-align: center;
+}
+
+.header h1 { font-size: 1.8rem; margin-bottom: 0.3rem; }
+.subtitle { font-size: 0.9rem; opacity: 0.9; }
+
+.nav {
+    background: white;
+    padding: 0 2rem;
+    border-bottom: 1px solid #e1e4e8;
+    display: flex;
+    gap: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.nav-link {
+    padding: 0.8rem 1.2rem;
+    color: #555;
+    text-decoration: none;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.nav-link:hover { color: #667eea; border-bottom-color: #667eea; }
+.nav-link.active { color: #667eea; border-bottom-color: #667eea; }
+
+.container {
+    max-width: 1100px;
+    margin: 1.5rem auto;
+    padding: 0 1rem;
+}
+
+.card {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.2rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.card h2 { color: #333; margin-bottom: 0.8rem; font-size: 1.25rem; }
+.card h3 { color: #555; margin-bottom: 0.6rem; font-size: 1.1rem; }
+.card h4 { color: #667eea; margin-bottom: 0.4rem; }
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.badge {
+    background: #e8eaff;
+    color: #667eea;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+/* 表格 */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th, .table td {
+    padding: 0.7rem 0.8rem;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.table th {
+    background: #f8f9fb;
+    font-weight: 600;
+    color: #555;
+    font-size: 0.85rem;
+}
+
+.table tr:hover { background: #fafbff; }
+
+/* 状态徽标 */
+.status {
+    padding: 0.2rem 0.6rem;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.status.active { background: #e6f7e6; color: #2e7d32; }
+.status.inactive { background: #fde8e8; color: #c62828; }
+.status.pending { background: #fff3e0; color: #e65100; }
+
+/* 按钮 */
+.btn {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.btn-sm { padding: 0.3rem 0.6rem; font-size: 0.75rem; }
+
+.btn-primary { background: #667eea; color: white; }
+.btn-primary:hover { background: #5a6fd6; }
+.btn-success { background: #4caf50; color: white; }
+.btn-success:hover { background: #429a46; }
+.btn-danger { background: #f44336; color: white; }
+.btn-danger:hover { background: #d32f2f; }
+.btn-secondary { background: #e0e0e0; color: #555; }
+.btn-secondary:hover { background: #ccc; }
+
+/* 表单 */
+.form { display: flex; flex-direction: column; gap: 1rem; }
+.form-group { display: flex; flex-direction: column; gap: 0.3rem; }
+.form-group label { font-size: 0.85rem; font-weight: 500; color: #555; }
+.form-group input, .form-group select {
+    padding: 0.5rem 0.7rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+.form-group input:focus, .form-group select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102,126,234,0.15);
+}
+.form-actions { display: flex; gap: 0.5rem; align-items: center; }
+
+/* 模块网格 */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+}
+
+.module-card {
+    border: 1px solid #e8eaff;
+    border-radius: 8px;
+    padding: 1.2rem;
+    background: #fafbff;
+}
+
+.module-card.highlight { border-color: #667eea; background: #f0f2ff; }
+.module-card h3 { color: #667eea; font-size: 1rem; margin-bottom: 0.3rem; }
+.module-card p { font-size: 0.8rem; color: #888; margin-bottom: 0.5rem; }
+.module-card ul { list-style: none; padding: 0; }
+.module-card ul li {
+    padding: 0.2rem 0;
+    font-size: 0.8rem;
+    color: #555;
+}
+
+.module-card ul li.dep { color: #667eea; font-weight: 500; }
+.module-card ul li::before {
+    content: '• ';
+    color: #667eea;
+    font-weight: bold;
+}
+
+/* 原则展示 */
+.principles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.principle {
+    padding: 1rem;
+    background: #f8f9fb;
+    border-radius: 6px;
+    border-left: 3px solid #667eea;
+}
+
+.principle p { font-size: 0.85rem; color: #666; }
+
+code {
+    background: #f0f2f5;
+    padding: 0.1rem 0.3rem;
+    border-radius: 3px;
+    font-size: 0.8rem;
+    font-family: "SF Mono", Monaco, Consolas, monospace;
+}
+
+mark {
+    background: #fff3cd;
+    padding: 0.05rem 0.2rem;
+    border-radius: 3px;
+}
+
+.text-muted { color: #999; }
+.text-center { text-align: center; }
+.notice {
+    margin-top: 0.8rem;
+    padding: 0.5rem;
+    background: #fff8e1;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: #e65100;
+}
+
+pre.diagram {
+    background: #1e1e3f;
+    color: #a8d8a8;
+    padding: 1rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    overflow-x: auto;
+    line-height: 1.4;
+}
+
+.footer {
+    text-align: center;
+    padding: 1.5rem;
+    color: #999;
+    font-size: 0.8rem;
+    border-top: 1px solid #e1e4e8;
+    margin-top: 2rem;
+}
+
+ol { padding-left: 1.5rem; }
+ol li { margin-bottom: 0.4rem; font-size: 0.9rem; }

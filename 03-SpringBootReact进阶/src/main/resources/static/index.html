@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spring Boot + React 进阶版</title>
+    <link rel="preconnect" href="https://esm.sh">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: system-ui, sans-serif; background: #f5f5f5; color: #202124; }
+        nav { background: #202124; padding: 12px 24px; display: flex; gap: 20px; }
+        nav a { color: #fff; text-decoration: none; padding: 6px 12px; border-radius: 4px; }
+        nav a:hover, nav a.active { background: rgba(255,255,255,0.15); color: #61dafb; }
+        #app { max-width: 960px; margin: 24px auto; padding: 0 20px; }
+        .card { background: white; border-radius: 8px; padding: 24px; margin: 16px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        button { background: #61dafb; color: #202124; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        button:hover { background: #4fa8c7; }
+        button.danger { background: #ea4335; color: white; }
+        button.edit { background: #f9ab00; color: #202124; }
+        input, select { padding: 8px 12px; border: 1px solid #dadce0; border-radius: 6px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e8eaed; }
+        th { background: #f8f9fa; }
+        .form-row { display: flex; gap: 10px; align-items: center; margin: 8px 0; flex-wrap: wrap; }
+        label { min-width: 70px; font-weight: 500; color: #5f6368; font-size: 14px; }
+        .msg { padding: 10px; border-radius: 6px; margin-top: 10px; }
+        .msg.ok { background: #e6f4ea; color: #137333; }
+        .msg.err { background: #fce8e6; color: #c5221f; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "react": "https://esm.sh/react@18.3.1",
+            "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
+            "react-router-dom": "https://esm.sh/react-router-dom@6.26.2",
+            "htm": "https://esm.sh/htm@3.1.1"
+        }
+    }
+    </script>
+
+    <script type="module" src="./frontend/main.js"></script>
+</body>
+</html>

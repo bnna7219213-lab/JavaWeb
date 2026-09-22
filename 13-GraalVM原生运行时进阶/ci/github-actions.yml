@@ -1,0 +1,55 @@
+# GitHub Actions CI/CD - GraalVM Native Image Build
+name: GraalVM Native Image CI
+
+on:
+  push:
+    branches: [main, master]
+    tags: ['v*']
+  pull_request:
+    branches: [main, master]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: github-actions/graalvm-native-advanced
+
+jobs:
+  build-native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up GraalVM 21
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: maven-${{ hashFiles('pom.xml') }}
+          restore-keys: maven-
+
+      - name: AOT Process
+        run: mvn -B spring-boot:process-aot
+
+      - name: Build Native Image
+        run: mvn -B -DskipTests package native:compile
+
+      - name: Smoke Test
+        run: |
+          ./target/graalvm-native-advanced &
+          sleep 10
+          curl -f http://localhost:8104/api/perf/health
+          curl -f http://localhost:8104/api/users
+          pkill -f graalvm-native-advanced
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-image-linux
+          path: target/graalvm-native-advanced

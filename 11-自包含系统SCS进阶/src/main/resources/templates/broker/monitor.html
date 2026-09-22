@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>消息中间件 - SCS Message Broker</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>SCS Message Broker</h1>
+            <p class="subtitle">分布式消息代理 (模拟 Kafka/RabbitMQ)</p>
+            <span class="badge">跨SCS异步通信总线</span>
+        </header>
+
+        <nav class="nav">
+            <a th:href="@{/}">总览</a>
+            <a th:href="@{/user-scs/}">User SCS</a>
+            <a th:href="@{/order-scs/}">Order SCS</a>
+            <a th:href="@{/broker/}" class="active">消息中间件</a>
+        </nav>
+
+        <main class="content">
+            <div class="card">
+                <h2>Broker 状态总览</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-label">总Topic数</div>
+                        <div class="stat-value" th:text="${brokerInfo.totalTopics}">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">总消息数</div>
+                        <div class="stat-value" th:text="${brokerInfo.totalMessages}">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Topic 列表</h2>
+                <div th:if="${#lists.isEmpty(topics)}" class="empty-state">
+                    <p>暂无消息。试试在 <a th:href="@{/user-scs/new}">User SCS创建用户</a> 来触发跨SCS事件</p>
+                </div>
+                <table th:if="${not #lists.isEmpty(topics)}" class="table">
+                    <thead>
+                        <tr>
+                            <th>Topic名称</th>
+                            <th>消息数</th>
+                            <th>未消费</th>
+                            <th>用途说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="topicInfo : ${brokerInfo.topics}">
+                            <td class="mono" th:text="${topicInfo.key}"></td>
+                            <td th:text="${topicInfo.value.total}"></td>
+                            <td th:text="${topicInfo.value.unconsumed}"></td>
+                            <td>
+                                <span th:switch="${topicInfo.key}">
+                                    <span th:case="'scs.events.user.created'">用户创建事件 - User SCS -> Order SCS</span>
+                                    <span th:case="'scs.events.user.deleted'">用户删除事件 - User SCS -> Order SCS</span>
+                                    <span th:case="'scs.events.order.created'">订单创建事件 - Order SCS -> 其他SCS</span>
+                                    <span th:case="*">Unknown Topic</span>
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h2>最近消息记录</h2>
+                <div th:if="${#lists.isEmpty(recentMessages)}" class="empty-state">
+                    <p>暂无消息记录</p>
+                </div>
+                <table th:if="${not #lists.isEmpty(recentMessages)}" class="table">
+                    <thead>
+                        <tr>
+                            <th>消息ID</th>
+                            <th>Topic</th>
+                            <th>来源SCS</th>
+                            <th>状态</th>
+                            <th>Payload</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="msg : ${recentMessages}">
+                            <td class="mono" th:text="${msg.messageId}"></td>
+                            <td class="mono" th:text="${msg.topic}"></td>
+                            <td>
+                                <span class="status-badge"
+                                      th:classappend="${msg.source == 'User SCS' ? 'status-active' : 'status-inactive'}"
+                                      th:text="${msg.source}"></span>
+                            </td>
+                            <td>
+                                <span class="status-badge"
+                                      th:classappend="${msg.consumed ? 'status-active' : 'status-inactive'}"
+                                      th:text="${msg.consumed ? '已消费' : '未消费'}"></span>
+                            </td>
+                            <td class="payload" th:text="${#strings.abbreviate(msg.payload, 60)}"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3>消息中间件在SCS架构中的角色</h3>
+                <div class="info-box">
+                    <p>在SCS架构中，消息中间件是连接各个自包含系统的神经系统：</p>
+                    <ul>
+                        <li><strong>User SCS</strong> 发布 scs.events.user.created 到消息中间件</li>
+                        <li><strong>ScsMessageBroker</strong> 监听事件并路由到对应Topic (模拟Kafka)</li>
+                        <li><strong>Order SCS</strong> @EventListener(UserCreatedEvent) 消费事件，自动创建默认订单</li>
+                        <li>全程异步：发布后不等处理结果，实现松耦合</li>
+                    </ul>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>SCS Message Broker (模拟Kafka) | 端口: 8100</p>
+        </footer>
+    </div>
+</body>
+</html>

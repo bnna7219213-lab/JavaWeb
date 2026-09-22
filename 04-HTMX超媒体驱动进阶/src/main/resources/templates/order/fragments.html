@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head></head>
+<body>
+
+    <!-- ============================================ -->
+    <!-- 订单表格 - 完整片段 -->
+    <!-- ============================================ -->
+    <div th:fragment="orderTable" class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>订单号</th>
+                    <th>产品</th>
+                    <th>金额</th>
+                    <th>状态</th>
+                    <th>创建时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="order : ${orders}" th:id="'order-row-' + ${order.id}">
+                    <td th:text="${order.id}">1</td>
+                    <td th:text="${order.orderNo}">ORD001</td>
+                    <td th:text="${order.productName}">MacBook</td>
+                    <td th:text="${'¥' + #numbers.formatDecimal(order.amount, 1, 2)}">¥14999.00</td>
+                    <td>
+                        <span class="status-badge"
+                              th:classappend="${order.status == '已支付' ? 'status-paid' :
+                                                order.status == '待发货' ? 'status-pending' :
+                                                order.status == '待支付' ? 'status-unpaid' :
+                                                'status-done'}"
+                              th:text="${order.status}">已支付</span>
+                    </td>
+                    <td th:text="${order.formattedTime}">2024-01-01</td>
+                    <td class="actions">
+                        <!-- 状态操作：点击切换状态 -->
+                        <button class="btn btn-sm btn-info"
+                                th:if="${order.status == '待支付'}"
+                                th:hx-post="@{'/orders/{id}/status'(id=${order.id})}"
+                                hx-vals='{"status": "已支付"}'
+                                th:hx-target="'#order-row-' + ${order.id}"
+                                hx-swap="outerHTML">
+                            标记已支付
+                        </button>
+                        <button class="btn btn-sm btn-info"
+                                th:if="${order.status == '已支付'}"
+                                th:hx-post="@{'/orders/{id}/status'(id=${order.id})}"
+                                hx-vals='{"status": "待发货"}'
+                                th:hx-target="'#order-row-' + ${order.id}"
+                                hx-swap="outerHTML">
+                            标记已发货
+                        </button>
+                        <button class="btn btn-sm btn-info"
+                                th:if="${order.status == '待发货'}"
+                                th:hx-post="@{'/orders/{id}/status'(id=${order.id})}"
+                                hx-vals='{"status": "已完成"}'
+                                th:hx-target="'#order-row-' + ${order.id}"
+                                hx-swap="outerHTML">
+                            标记已完成
+                        </button>
+                        <span th:if="${order.status == '已完成'}" class="text-done">--</span>
+                        <!-- 删除 -->
+                        <button class="btn btn-sm btn-danger"
+                                th:hx-delete="@{'/orders/{id}'(id=${order.id})}"
+                                th:hx-target="'#order-row-' + ${order.id}"
+                                hx-swap="outerHTML"
+                                th:hx-confirm="'确定要删除订单「${order.productName}」吗？'">
+                            删除
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <p th:if="${#lists.isEmpty(orders)}" class="empty-msg">暂无订单数据</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 单行订单 - outerHTML swap 行级更新 -->
+    <!-- ============================================ -->
+    <tr th:fragment="orderRow" th:id="'order-row-' + ${order.id}">
+        <td th:text="${order.id}">1</td>
+        <td th:text="${order.orderNo}">ORD001</td>
+        <td th:text="${order.productName}">MacBook</td>
+        <td th:text="${'¥' + #numbers.formatDecimal(order.amount, 1, 2)}">¥14999.00</td>
+        <td>
+            <span class="status-badge"
+                  th:classappend="${order.status == '已支付' ? 'status-paid' :
+                                    order.status == '待发货' ? 'status-pending' :
+                                    order.status == '待支付' ? 'status-unpaid' :
+                                    'status-done'}"
+                  th:text="${order.status}">已支付</span>
+        </td>
+        <td th:text="${order.formattedTime}">2024-01-01</td>
+        <td class="actions">
+            <button class="btn btn-sm btn-info"
+                    th:if="${order.status == '待支付'}"
+                    th:hx-post="@{'/orders/{id}/status'(id=${order.id})}"
+                    hx-vals='{"status": "已支付"}'
+                    th:hx-target="'#order-row-' + ${order.id}"
+                    hx-swap="outerHTML">
+                标记已支付
+            </button>
+            <button class="btn btn-sm btn-info"
+                    th:if="${order.status == '已支付'}"
+                    th:hx-post="@{'/orders/{id}/status'(id=${order.id})}"
+                    hx-vals='{"status": "待发货"}'
+                    th:hx-target="'#order-row-' + ${order.id}"
+                    hx-swap="outerHTML">
+                标记已发货
+            </button>
+            <button class="btn btn-sm btn-info"
+                    th:if="${order.status == '待发货'}"
+                    th:hx-post="@{'/orders/{id}/status'(id=${order.id})}"
+                    hx-vals='{"status": "已完成"}'
+                    th:hx-target="'#order-row-' + ${order.id}"
+                    hx-swap="outerHTML">
+                标记已完成
+            </button>
+            <span th:if="${order.status == '已完成'}" class="text-done">--</span>
+            <button class="btn btn-sm btn-danger"
+                    th:hx-delete="@{'/orders/{id}'(id=${order.id})}"
+                    th:hx-target="'#order-row-' + ${order.id}"
+                    hx-swap="outerHTML"
+                    th:hx-confirm="'确定要删除订单「${order.productName}」吗？'">
+                删除
+            </button>
+        </td>
+    </tr>
+
+    <!-- ============================================ -->
+    <!-- 订单表单 -->
+    <!-- ============================================ -->
+    <tr th:fragment="orderForm">
+        <td colspan="7">
+            <div class="inline-form-container order-form-container">
+                <h4>新建订单</h4>
+                <form hx-post="/orders/save"
+                      hx-target="#form-container"
+                      hx-swap="innerHTML"
+                      class="inline-form"
+                      hx-on::after-request="if(!event.detail.failed) this.reset()">
+                    <div class="form-group">
+                        <label>用户 *</label>
+                        <select name="userId" required>
+                            <option value="">请选择用户</option>
+                            <option th:each="u : ${users}"
+                                    th:value="${u.id}"
+                                    th:text="${u.name}">张三</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>产品 *</label>
+                        <input type="text" name="productName" required
+                               placeholder="产品名称" minlength="1" maxlength="100">
+                    </div>
+                    <div class="form-group">
+                        <label>金额 *</label>
+                        <input type="number" name="amount" required
+                               placeholder="金额" step="0.01" min="0.01" max="999999.99">
+                    </div>
+                    <div class="form-group">
+                        <label>状态</label>
+                        <select name="status">
+                            <option value="待支付">待支付</option>
+                            <option value="已支付">已支付</option>
+                            <option value="待发货">待发货</option>
+                            <option value="已完成">已完成</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-success btn-sm">创建订单</button>
+                        <button type="button" class="btn btn-secondary btn-sm"
+                                onclick="document.getElementById('form-container').innerHTML=''">
+                            取消
+                        </button>
+                    </div>
+                </form>
+                <div class="validation-msg">带 * 为必填项 | 金额 > 0</div>
+            </div>
+        </td>
+    </tr>
+
+    <!-- 空片段 -->
+    <tr th:fragment="empty"></tr>
+
+</body>
+</html>

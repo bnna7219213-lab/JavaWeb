@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GraalVM Native Image - Advanced Performance Panel</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>GraalVM Native Image</h1>
+        <p class="subtitle">Advanced AOT/Native Architecture | Spring Boot 3.3 + JDK 21</p>
+        <div class="nav-links">
+            <a href="/" class="active">Performance</a>
+            <a href="/compare">Compare</a>
+            <a href="/api/perf/metrics">API</a>
+            <a href="/actuator/health">Health</a>
+        </div>
+    </header>
+
+    <section id="mode-banner" class="mode-banner mode-jvm">
+        <div class="mode-icon">&#9881;</div>
+        <div class="mode-info">
+            <h2 id="runtime-mode">Detecting Runtime...</h2>
+            <p id="runtime-detail">Analyzing execution environment</p>
+        </div>
+    </section>
+
+    <section class="metrics-overview">
+        <h2>Real-Time Metrics</h2>
+        <div class="metrics-grid">
+            <div class="metric-card startup">
+                <div class="metric-icon">&#9200;</div>
+                <div class="metric-value" id="startup-time">--</div>
+                <div class="metric-unit">ms</div>
+                <div class="metric-label">Startup Time</div>
+                <div class="metric-bar"><div class="metric-bar-fill" id="startup-bar"></div></div>
+            </div>
+            <div class="metric-card memory">
+                <div class="metric-icon">&#128187;</div>
+                <div class="metric-value" id="heap-used">--</div>
+                <div class="metric-unit">MB</div>
+                <div class="metric-label">Heap Used</div>
+                <div class="metric-bar"><div class="metric-bar-fill" id="heap-bar"></div></div>
+            </div>
+            <div class="metric-card total-mem">
+                <div class="metric-icon">&#128202;</div>
+                <div class="metric-value" id="total-mem">--</div>
+                <div class="metric-unit">MB</div>
+                <div class="metric-label">Total Memory</div>
+                <div class="metric-bar"><div class="metric-bar-fill" id="total-bar"></div></div>
+            </div>
+            <div class="metric-card threads">
+                <div class="metric-icon">&#9878;</div>
+                <div class="metric-value" id="thread-count">--</div>
+                <div class="metric-unit">threads</div>
+                <div class="metric-label">Active Threads</div>
+                <div class="metric-bar"><div class="metric-bar-fill" id="thread-bar"></div></div>
+            </div>
+            <div class="metric-card gc">
+                <div class="metric-icon">&#9850;</div>
+                <div class="metric-value" id="gc-count">--</div>
+                <div class="metric-unit">collections</div>
+                <div class="metric-label">GC Collections</div>
+                <div class="metric-bar"><div class="metric-bar-fill" id="gc-bar"></div></div>
+            </div>
+            <div class="metric-card uptime">
+                <div class="metric-icon">&#9201;</div>
+                <div class="metric-value" id="uptime">--</div>
+                <div class="metric-unit">sec</div>
+                <div class="metric-label">Uptime</div>
+                <div class="metric-bar"><div class="metric-bar-fill" id="uptime-bar"></div></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="gc-details">
+        <h2>Garbage Collector</h2>
+        <div class="gc-grid" id="gc-grid"></div>
+    </section>
+
+    <section class="memory-pools">
+        <h2>Memory Pools</h2>
+        <table class="data-table" id="pools-table">
+            <thead>
+                <tr><th>Pool Name</th><th>Type</th><th>Used</th><th>Max</th><th>Usage %</th></tr>
+            </thead>
+            <tbody id="pools-body"></tbody>
+        </table>
+    </section>
+
+    <section class="app-stats">
+        <h2>Application Statistics</h2>
+        <div class="stats-row">
+            <div class="stat-item"><span class="stat-label">Users</span><span class="stat-value" id="user-count">--</span></div>
+            <div class="stat-item"><span class="stat-label">Orders</span><span class="stat-value" id="order-count">--</span></div>
+            <div class="stat-item"><span class="stat-label">Java Version</span><span class="stat-value" id="java-version">--</span></div>
+            <div class="stat-item"><span class="stat-label">Processors</span><span class="stat-value" id="processors">--</span></div>
+        </div>
+    </section>
+
+    <footer>
+        <p>GraalVM Native Image Advanced | <a href="/api/perf/metrics">JSON Metrics</a> | <a href="/api/perf/comparison">Comparison Data</a></p>
+    </footer>
+</div>
+<script th:src="@{/js/perf.js}"></script>
+</body>
+</html>

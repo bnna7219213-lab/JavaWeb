@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle}">Astro岛屿架构</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <!-- 导航栏：纯静态内容，服务端渲染，无需 JS -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <a th:href="@{/}">Astro Islands</a>
+        </div>
+        <ul class="nav-links">
+            <li><a th:href="@{/}">首页</a></li>
+            <li><a th:href="@{/users}">用户管理</a></li>
+        </ul>
+    </nav>
+
+    <!-- 主内容区域 -->
+    <main class="container">
+        <div th:replace="~{::content}"></div>
+    </main>
+
+    <!-- 页脚：纯静态，服务端渲染 -->
+    <footer class="footer">
+        <p>&copy; 2024 Astro岛屿架构示例 - 默认零JS静态渲染</p>
+    </footer>
+</body>
+</html>

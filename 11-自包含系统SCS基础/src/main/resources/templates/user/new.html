@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>创建用户 - User SCS</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>创建用户</h1>
+            <p class="subtitle" th:text="${scsName}">User SCS</p>
+        </header>
+
+        <nav class="nav">
+            <a th:href="@{/}">首页</a>
+            <a th:href="@{/user/}">用户管理</a>
+            <a th:href="@{/user/new}" class="active">创建用户</a>
+            <a th:href="@{/user/messages}">消息监控</a>
+            <a th:href="@{/user/scs-info}">SCS信息</a>
+        </nav>
+
+        <main class="content">
+            <!-- 错误消息 -->
+            <div th:if="${errorMessage}" class="alert alert-error" th:text="${errorMessage}"></div>
+
+            <div class="card">
+                <h2>填写用户信息</h2>
+                <p class="hint">创建用户后，系统将自动发布 <code>UserCreated</code> 领域事件。</p>
+
+                <form th:action="@{/user/create}" method="post" class="form">
+                    <div class="form-group">
+                        <label for="username">用户名 *</label>
+                        <input type="text" id="username" name="username" required
+                               th:value="${username}" placeholder="请输入用户名">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">邮箱 *</label>
+                        <input type="email" id="email" name="email" required
+                               th:value="${email}" placeholder="请输入邮箱">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">手机号</label>
+                        <input type="tel" id="phone" name="phone"
+                               th:value="${phone}" placeholder="请输入手机号（可选）">
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">创建用户</button>
+                        <a th:href="@{/user/}" class="btn btn-secondary">取消</a>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3>事件流程说明</h3>
+                <div class="flow-diagram">
+                    <div class="flow-step">
+                        <div class="flow-num">1</div>
+                        <p>提交表单</p>
+                    </div>
+                    <div class="flow-arrow">-></div>
+                    <div class="flow-step">
+                        <div class="flow-num">2</div>
+                        <p>存储到<br>SCS自有DB</p>
+                    </div>
+                    <div class="flow-arrow">-></div>
+                    <div class="flow-step">
+                        <div class="flow-num">3</div>
+                        <p>发布<br>UserCreated事件</p>
+                    </div>
+                    <div class="flow-arrow">-></div>
+                    <div class="flow-step">
+                        <div class="flow-num">4</div>
+                        <p>事件消费者<br>处理后续逻辑</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>User SCS - 自包含用户服务 | 端口: 8099</p>
+        </footer>
+    </div>
+</body>
+</html>

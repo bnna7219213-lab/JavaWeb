@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>SCS 基础版 - 自包含系统</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>SCS 基础版</h1>
+            <p class="subtitle">Self-Contained System 自包含系统演示</p>
+            <span class="badge" th:text="${scsName}">User SCS</span>
+        </header>
+
+        <nav class="nav">
+            <a th:href="@{/}" class="active">首页</a>
+            <a th:href="@{/user/}">用户管理</a>
+            <a th:href="@{/user/new}">创建用户</a>
+            <a th:href="@{/user/messages}">消息监控</a>
+            <a th:href="@{/user/scs-info}">SCS信息</a>
+        </nav>
+
+        <main class="content">
+            <div class="card">
+                <h2>什么是SCS?</h2>
+                <p><strong>Self-Contained System</strong> 是一种微服务架构风格，核心理念是：</p>
+                <ul>
+                    <li>一个服务 = 一个完全自包含的系统单元</li>
+                    <li>每个SCS有自己的后端、数据库、前端</li>
+                    <li>能独立运行、独立部署</li>
+                    <li>服务间通过异步消息通信</li>
+                    <li>每个SCS有明确的限界上下文</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>本SCS单元: 用户服务</h2>
+                <div class="feature-grid">
+                    <div class="feature-item">
+                        <h3>自有前端</h3>
+                        <p>同一jar内的Thymeleaf模板，路径: /user/</p>
+                    </div>
+                    <div class="feature-item">
+                        <h3>自有API</h3>
+                        <p>RESTful接口，路径: /api/v1/users</p>
+                    </div>
+                    <div class="feature-item">
+                        <h3>自有数据库</h3>
+                        <p>模拟的独立数据存储，完全隔离</p>
+                    </div>
+                    <div class="feature-item">
+                        <h3>自有消息</h3>
+                        <p>Spring Events + Message Broker模拟</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>快速开始</h2>
+                <ol>
+                    <li>访问 <a th:href="@{/user/}">用户管理页面</a> 体验SCS前端</li>
+                    <li>创建用户，观察事件自动发布到消息中间件</li>
+                    <li>访问 <a th:href="@{/user/messages}">消息监控</a> 查看消息流转</li>
+                    <li>使用 <a th:href="@{/user/scs-info}">SCS信息</a> 了解架构</li>
+                </ol>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>SCS Basic | Port: <span th:text="${port}">8099</span> | JDK 21 + Spring Boot 3.x</p>
+        </footer>
+    </div>
+</body>
+</html>

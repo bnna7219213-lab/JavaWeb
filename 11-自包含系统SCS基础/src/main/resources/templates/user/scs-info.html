@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>SCS信息 - User SCS</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>SCS 系统信息</h1>
+            <p class="subtitle" th:text="${scsName}">User SCS</p>
+        </header>
+
+        <nav class="nav">
+            <a th:href="@{/}">首页</a>
+            <a th:href="@{/user/}">用户管理</a>
+            <a th:href="@{/user/new}">创建用户</a>
+            <a th:href="@{/user/messages}">消息监控</a>
+            <a th:href="@{/user/scs-info}" class="active">SCS信息</a>
+        </nav>
+
+        <main class="content">
+            <div class="card">
+                <h2>自包含系统单元信息</h2>
+                <div class="info-grid">
+                    <div class="info-row">
+                        <span class="info-key">SCS名称</span>
+                        <span class="info-val" th:text="${scsInfo.name}">User SCS</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-key">版本</span>
+                        <span class="info-val" th:text="${scsInfo.version}">1.0.0</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-key">端口</span>
+                        <span class="info-val" th:text="${scsInfo.port}">8099</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-key">数据库</span>
+                        <span class="info-val" th:text="${scsInfo.database}">USER_SCS_DB</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-key">消息中间件</span>
+                        <span class="info-val" th:text="${scsInfo.messageBroker}">Internal Broker</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-key">前端引擎</span>
+                        <span class="info-val" th:text="${scsInfo.frontend}">Thymeleaf</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-key">API前缀</span>
+                        <span class="info-val mono" th:text="${scsInfo.apiPrefix}">/api/v1/users</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-key">页面前缀</span>
+                        <span class="info-val mono" th:text="${scsInfo.pagePrefix}">/user/</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>数据库状态</h2>
+                <div class="info-grid">
+                    <div class="info-row" th:each="entry : ${dbInfo}">
+                        <span class="info-key" th:text="${entry.key}">key</span>
+                        <span class="info-val" th:text="${entry.value}">value</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>SCS 核心理念</h2>
+                <div class="principles">
+                    <div class="principle">
+                        <h3>自包含 (Self-Contained)</h3>
+                        <p>一个服务就是一个完整系统。包含前端UI、后端逻辑、数据存储，能独立运行。</p>
+                    </div>
+                    <div class="principle">
+                        <h3>独立部署 (Independently Deployable)</h3>
+                        <p>每个SCS可以独立打包、部署、扩缩容，不影响其他服务。</p>
+                    </div>
+                    <div class="principle">
+                        <h3>异步通信 (Async Communication)</h3>
+                        <p>服务间通过消息传递事件，而非同步HTTP调用，实现松耦合。</p>
+                    </div>
+                    <div class="principle">
+                        <h3>数据隔离 (Data Isolation)</h3>
+                        <p>每个SCS拥有自己的数据库，不共享数据存储，避免耦合。</p>
+                    </div>
+                    <div class="principle">
+                        <h3>限界上下文 (Bounded Context)</h3>
+                        <p>每个SCS有清晰的业务边界，只处理自己领域内的数据和逻辑。</p>
+                    </div>
+                    <div class="principle">
+                        <h3>前端集成 (Frontend Integration)</h3>
+                        <p>SCS自带UI组件，通过API网关聚合实现统一的用户体验。</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>User SCS - 自包含用户服务 | 端口: 8099</p>
+        </footer>
+    </div>
+</body>
+</html>

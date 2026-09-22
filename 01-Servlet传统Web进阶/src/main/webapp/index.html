@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Servlet 传统Web进阶示例</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: system-ui, -apple-system, sans-serif; max-width: 900px; margin: 30px auto; padding: 0 20px; color: #202124; }
+        h2 { color: #1a73e8; border-bottom: 2px solid #e8eaed; padding-bottom: 8px; margin-bottom: 20px; }
+        h3 { color: #5f6368; margin-bottom: 12px; font-size: 16px; }
+        .card { background: #f8f9fa; border-radius: 8px; padding: 20px; margin: 16px 0; border: 1px solid #e8eaed; }
+        .form-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; flex-wrap: wrap; }
+        label { min-width: 60px; font-weight: 500; color: #5f6368; font-size: 14px; }
+        input, select { padding: 8px 12px; border: 1px solid #dadce0; border-radius: 6px; font-size: 14px; outline: none; transition: border-color 0.2s; }
+        input:focus { border-color: #1a73e8; }
+        button { background: #1a73e8; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; transition: background 0.2s; }
+        button:hover { background: #1557b0; }
+        button.danger { background: #ea4335; }
+        button.danger:hover { background: #c5221f; }
+        button.secondary { background: #5f6368; }
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e8eaed; font-size: 14px; }
+        th { background: #e8eaed; font-weight: 600; color: #202124; }
+        .msg { padding: 10px 14px; border-radius: 6px; margin-top: 10px; font-size: 14px; }
+        .msg.success { background: #e6f4ea; color: #137333; }
+        .msg.error { background: #fce8e6; color: #c5221f; }
+        .actions { display: flex; gap: 8px; }
+    </style>
+</head>
+<body>
+    <h2>Servlet 传统Web进阶版 - 用户管理系统</h2>
+
+    <!-- 搜索区域 -->
+    <div class="card">
+        <h3>查询用户</h3>
+        <div class="form-row">
+            <label>搜索：</label>
+            <input type="text" id="searchKey" placeholder="输入姓名关键词（留空查全部）" />
+            <button onclick="loadUsers()">搜索/刷新</button>
+        </div>
+    </div>
+
+    <!-- 用户列表 -->
+    <div class="card">
+        <h3>用户列表</h3>
+        <table id="userTable">
+            <thead>
+                <tr><th>ID</th><th>姓名</th><th>年龄</th><th>邮箱</th><th>操作</th></tr>
+            </thead>
+            <tbody id="userTbody"><tr><td colspan="5">点击搜索加载数据...</td></tr></tbody>
+        </table>
+    </div>
+
+    <!-- 新增用户 -->
+    <div class="card">
+        <h3>新增用户（POST）</h3>
+        <div class="form-row">
+            <label>姓名：</label>
+            <input type="text" id="name" placeholder="请输入姓名" />
+            <label>年龄：</label>
+            <input type="number" id="age" placeholder="请输入年龄" />
+            <label>邮箱：</label>
+            <input type="email" id="email" placeholder="请输入邮箱" />
+            <button onclick="addUser()">创建用户</button>
+        </div>
+        <div id="resultMsg"></div>
+    </div>
+
+    <script>
+        // 加载用户列表
+        function loadUsers() {
+            const key = document.getElementById('searchKey').value.trim();
+            const url = key ? 'api/user/list?search=' + encodeURIComponent(key) : 'api/user/list';
+
+            fetch(url)
+                .then(r => r.json())
+                .then(res => {
+                    const tbody = document.getElementById('userTbody');
+                    if (res.code === 200 && res.data.length > 0) {
+                        tbody.innerHTML = res.data.map(u =>
+                            '<tr><td>' + u.id + '</td><td>' + u.name + '</td><td>' + u.age + '</td><td>' + (u.email || '-') + '</td>' +
+                            '<td><button class="danger" onclick="deleteUser(' + u.id + ')">删除</button></td></tr>'
+                        ).join('');
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="5">暂无数据</td></tr>';
+                    }
+                })
+                .catch(err => alert('查询失败: ' + err));
+        }
+
+        // 新增用户
+        function addUser() {
+            const user = {
+                name: document.getElementById('name').value,
+                age: parseInt(document.getElementById('age').value) || 0,
+                email: document.getElementById('email').value
+            };
+            const msgBox = document.getElementById('resultMsg');
+
+            fetch('api/user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(user)
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.code === 200) {
+                    msgBox.innerHTML = '<div class="msg success">✔ 创建成功！用户ID: ' + res.data.id + '</div>';
+                    document.getElementById('name').value = '';
+                    document.getElementById('age').value = '';
+                    document.getElementById('email').value = '';
+                    loadUsers();
+                } else {
+                    msgBox.innerHTML = '<div class="msg error">✘ ' + res.msg + '</div>';
+                }
+            })
+            .catch(err => msgBox.innerHTML = '<div class="msg error">✘ 请求异常: ' + err + '</div>');
+        }
+
+        // 删除用户
+        function deleteUser(id) {
+            if (!confirm('确认删除用户 ' + id + '？')) return;
+
+            fetch('api/user?id=' + id, { method: 'DELETE' })
+                .then(r => r.json())
+                .then(res => {
+                    alert(res.msg);
+                    if (res.code === 200) loadUsers();
+                })
+                .catch(err => alert('删除失败: ' + err));
+        }
+    </script>
+</body>
+</html>

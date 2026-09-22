@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spring Modulith 模块化单体基础版</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <header class="header">
+        <h1>Spring Modulith 模块化单体基础版</h1>
+        <p class="subtitle">基于 Spring Boot 3.3 + JDK 21 的模块化架构</p>
+    </header>
+
+    <nav class="nav">
+        <a th:href="@{/}" class="nav-link active">首页</a>
+        <a th:href="@{/users}" class="nav-link">用户管理</a>
+        <a th:href="@{/products}" class="nav-link">商品管理</a>
+        <a th:href="@{/orders}" class="nav-link">订单管理</a>
+    </nav>
+
+    <main class="container">
+        <section class="card">
+            <h2>模块化架构概述</h2>
+            <p>本项目演示了如何使用 Spring Boot 构建模块化单体应用。</p>
+            <p>系统分为三个独立模块，每个模块有清晰的边界和对外接口。</p>
+        </section>
+
+        <section class="card">
+            <h2>模块结构</h2>
+            <div class="grid">
+                <div class="module-card">
+                    <h3>User 模块</h3>
+                    <p>用户管理</p>
+                    <ul>
+                        <li>UserEntity (内部)</li>
+                        <li>UserService (内部)</li>
+                        <li><mark>UserModule</mark> (对外API)</li>
+                        <li>UserController</li>
+                    </ul>
+                </div>
+                <div class="module-card">
+                    <h3>Product 模块</h3>
+                    <p>商品管理</p>
+                    <ul>
+                        <li>ProductEntity (内部)</li>
+                        <li>ProductService (内部)</li>
+                        <li><mark>ProductModule</mark> (对外API)</li>
+                        <li>ProductController</li>
+                    </ul>
+                </div>
+                <div class="module-card highlight">
+                    <h3>Order 模块</h3>
+                    <p>订单管理（跨模块通信）</p>
+                    <ul>
+                        <li>OrderEntity (内部)</li>
+                        <li>OrderService (内部)</li>
+                        <li><mark>OrderModule</mark> (对外API)</li>
+                        <li>OrderController</li>
+                        <li class="dep">→ 引用 UserModule 接口</li>
+                        <li class="dep">→ 引用 ProductModule 接口</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>设计原则</h2>
+            <div class="principles">
+                <div class="principle">
+                    <h4>接口隔离</h4>
+                    <p>模块通过 <code>*Module</code> 接口对外暴露功能，禁止直接访问实体类</p>
+                </div>
+                <div class="principle">
+                    <h4>依赖倒置</h4>
+                    <p>OrderService 依赖 UserModule / ProductModule 接口，而非具体实现</p>
+                </div>
+                <div class="principle">
+                    <h4>封装性</h4>
+                    <p>Entity 和内部 Service 不对外暴露，跨模块通信走 API</p>
+                </div>
+                <div class="principle">
+                    <h4>事件驱动</h4>
+                    <p>模块使用 ApplicationEvent 解耦通信（OrderEvent, UserEvent）</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>模块依赖关系</h2>
+            <pre class="diagram">
+┌────────────────────────────────────────────┐
+│               Application                    │
+├──────────────┬──────────────┬────────────────┤
+│  User Module │ Product Mod. │  Order Module  │
+│              │              │                │
+│ UserModule   │ ProductModule│ OrderModule    │
+│ (api)        │ (api)        │ (api)          │
+│     ↑        │     ↑        │     ↑          │
+│     │        │     │        │     │          │
+│     └────────┴─────┴────────┘     │          │
+│              ↑                     │          │
+│     order通过接口调用user/product   │          │
+│              ↓                     │          │
+│     ApplicationEvent (user/order)  │          │
+└────────────────────────────────────────────┘
+            </pre>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>Spring Modulith 模块化单体基础版 | 端口 8101 | JDK 21 + Spring Boot 3.3</p>
+    </footer>
+</body>
+</html>

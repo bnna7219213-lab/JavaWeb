@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/base}">
+<head><title>User Analysis</title></head>
+<body>
+<section layout:fragment="content">
+    <div class="page-header">
+        <h1>User Analysis Center</h1>
+        <p class="page-desc">Multi-entity analysis: Alpine.js + React islands working together</p>
+    </div>
+
+    <!-- Static table: Thymeleaf renders full content -->
+    <div class="analysis-section">
+        <h3>Department Distribution (Static Server Render)</h3>
+        <table class="data-table">
+            <thead>
+                <tr><th>Name</th><th>Dept</th><th>Role</th><th>Email</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+                <tr th:each="u : ${users}">
+                    <td th:text="${u.name}">Name</td>
+                    <td th:text="${u.department}">Dept</td>
+                    <td th:text="${u.role}">Role</td>
+                    <td th:text="${u.email}">Email</td>
+                    <td th:text="${u.active} ? 'Active' : 'Inactive'">Status</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Island #1: Alpine.js Department Tabs -->
+    <div class="island-section" x-data="{ activeDept: 'all' }">
+        <h2 class="island-label">
+            <span class="island-badge alpine">ALPINE</span> Department Filter
+        </h2>
+        <div class="tab-bar">
+            <button :class="{ 'tab-active': activeDept === 'all' }" @click="activeDept = 'all'">All</button>
+            <th:block th:each="dept : ${departments}">
+                <button :class="{ 'tab-active': activeDept === '[[${dept}]]' }" @click="activeDept = '[[${dept}]]'" th:text="${dept}">Dept</button>
+            </th:block>
+        </div>
+        <div class="user-chips">
+            <template th:each="u : ${users}">
+                <span class="user-chip" th:if="${u.active}" th:text="${u.name}" th:style="${u.department}">User</span>
+            </template>
+        </div>
+    </div>
+
+    <!-- Island #2: React Data Viz -->
+    <div class="island-section react-island">
+        <h2 class="island-label">
+            <span class="island-badge react">REACT</span> Department Distribution Chart
+        </h2>
+        <div id="react-chart-root">Loading chart...</div>
+    </div>
+
+    <!-- Island #3: Alpine.js per-user toggle -->
+    <div class="island-section" x-data="userToggleIsland()">
+        <h2 class="island-label">
+            <span class="island-badge alpine">ALPINE</span> Bulk Status Toggle
+        </h2>
+        <button @click="toggleAll()" class="btn-toggle-all">Toggle All Status</button>
+        <span class="toggle-info">
+            <span x-text="activeCount"></span> / <span x-text="allUsers.length"></span> active
+        </span>
+        <div class="user-mini-list">
+            <template x-for="user in allUsers" :key="user.id">
+                <div class="mini-row" @click="toggleUser(user.id)">
+                    <span x-text="user.name"></span>
+                    <span :class="user.active ? 'status-active' : 'status-inactive'" x-text="user.active ? 'Active' : 'Inactive'">--</span>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <!-- Island Dependencies -->
+    
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+
+    <!-- Island Scripts -->
+    
+<script defer th:src="@{/js/toggle-island.js}"></script>
+    
+<script defer th:src="@{/js/react-dept-chart.js}"></script>
+</section>
+</body>
+</html>

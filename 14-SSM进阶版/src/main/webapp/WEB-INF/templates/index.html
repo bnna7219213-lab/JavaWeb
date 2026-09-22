@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>SSM 进阶版 - 仪表盘</title>
+    <link rel="stylesheet" th:href="@{/static/css/style.css}">
+</head>
+<body>
+    <nav class="topnav">
+        <span class="brand">SSM 进阶版</span>
+        <a th:href="@{/}">仪表盘</a>
+        <a th:href="@{/users.html}">用户管理</a>
+        <a th:href="@{/orders.html}">订单管理</a>
+    </nav>
+
+    <div class="container">
+        <h1>仪表盘</h1>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">用户总数</div>
+                <div class="stat-value" th:text="${userCount}">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">订单总数</div>
+                <div class="stat-value" th:text="${orderCount}">0</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>架构特性</h2>
+            <ul class="feature-list">
+                <li><strong>HikariCP 连接池</strong> — 高性能数据库连接管理</li>
+                <li><strong>AOP 切面日志</strong> — 无侵入式 Service 层方法计时</li>
+                <li><strong>全局异常处理器</strong> — @RestControllerAdvice 统一错误格式</li>
+                <li><strong>业务异常体系</strong> — BusinessException + 自定义错误码</li>
+                <li><strong>API 拦截器</strong> — 请求耗时日志</li>
+                <li><strong>分页查询</strong> — PageQuery + 分页响应</li>
+                <li><strong>驼峰映射</strong> — mapUnderscoreToCamelCase 自动转换</li>
+                <li><strong>用户-订单关联</strong> — 跨表 JOIN 关联查询</li>
+                <li><strong>统计看板</strong> — 聚合函数查询</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

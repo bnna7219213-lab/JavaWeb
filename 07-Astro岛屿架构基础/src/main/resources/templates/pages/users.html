@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/base}">
+<head>
+    <title>用户管理</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <div class="page-header">
+        <h1>用户列表</h1>
+        <p class="page-desc">以下用户列表通过 Thymeleaf 服务端渲染，首屏无需 JS。</p>
+    </div>
+
+    <!-- 用户列表：纯服务端渲染，静态 HTML -->
+    <div class="user-list">
+        <div th:each="u, iter : ${users}" class="user-card-static">
+            <span class="user-avatar" th:text="${u.avatar}">A</span>
+            <div class="user-info">
+                <h3 th:text="${u.name}">用户名</h3>
+                <p th:text="${u.email}">email@example.com</p>
+                <span class="role-badge" th:text="${u.role}" th:classappend="${u.active} ? 'active' : 'inactive'">角色</span>
+            </div>
+            <span class="status-dot" th:classappend="${u.active} ? 'online' : 'offline'"></span>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 交互岛屿 #1: Alpine.js 用户搜索 -->
+    <!-- 从 API 获取数据，客户端渲染搜索结果 -->
+    <!-- ============================================ -->
+    <div class="island-section" x-data="searchIsland()" x-init="init()">
+        <h2 class="island-label">
+            <span class="island-badge">ISLAND</span> 客户端搜索岛屿
+        </h2>
+        <p class="island-desc">从 /api/users 异步获取数据，客户端渲染搜索结果</p>
+        <input type="text" x-model="keyword" @input.debounce.300ms="search()" placeholder="搜索用户名或邮箱..." class="search-input">
+        <div x-show="loading" class="loading">搜索中...</div>
+        <div x-show="!loading && results.length === 0 && keyword" class="no-result">无结果</div>
+        <div class="user-list" x-show="results.length > 0">
+            <template x-for="user in results" :key="user.id">
+                <div class="user-card-static">
+                    <span class="user-avatar" x-text="user.avatar"></span>
+                    <div class="user-info">
+                        <h3 x-text="user.name"></h3>
+                        <p x-text="user.email"></p>
+                        <span class="role-badge" x-text="user.role"></span>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 交互岛屿 #2: Alpine.js 详情展开 -->
+    <!-- ============================================ -->
+    <div class="island-section" x-data="{ selectedUserId: null }">
+        <h2 class="island-label">
+            <span class="island-badge">ISLAND</span> 用户详情展开
+        </h2>
+        <p class="island-desc">选择一个用户查看详细信息（模拟单页应用路由体验）</p>
+        <div class="user-list">
+            <div th:each="u : ${users}" class="user-card-static"
+                 @click="selectedUserId = selectedUserId === [[${u.id}]] ? null : [[${u.id}]]">
+                <span class="user-avatar" th:text="${u.avatar}">A</span>
+                <div class="user-info">
+                    <h3 th:text="${u.name}">用户名</h3>
+                    <p th:text="${u.email}">email@example.com</p>
+                </div>
+                <span class="view-detail">点击查看详情</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alpine.js CDN -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script>
+        function searchIsland() {
+            return {
+                keyword: '',
+                results: [],
+                loading: false,
+                init() {
+                    console.log('搜索岛屿已水化');
+                },
+                search() {
+                    if (!this.keyword.trim()) {
+                        this.results = [];
+                        return;
+                    }
+                    this.loading = true;
+                    fetch(`/api/users/search?keyword=${encodeURIComponent(this.keyword)}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            this.results = data;
+                            this.loading = false;
+                        });
+                }
+            };
+        }
+    </script>
+</section>
+</body>
+</html>

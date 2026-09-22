@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/base}">
+<head><title>User Management</title></head>
+<body>
+<section layout:fragment="content">
+    <div class="page-header">
+        <h1>User Management</h1>
+        <p class="page-desc">Server-side rendered user list. Interactive islands below.</p>
+    </div>
+
+    <!-- Static user list (Thymeleaf rendered) -->
+    <div class="user-list">
+        <div th:each="u : ${users}" class="user-card-static">
+            <span class="user-avatar" th:text="${u.avatar}">A</span>
+            <div class="user-info">
+                <h3 th:text="${u.name}">Name</h3>
+                <p th:text="${u.email}">email</p>
+                <span class="badge-role" th:text="${u.role}">Role</span>
+                <span class="badge-dept" th:text="${u.department}">Dept</span>
+            </div>
+            <span class="status-dot" th:classappend="${u.active} ? 'online' : 'offline'"></span>
+        </div>
+    </div>
+
+    <!-- Island #1: Alpine.js multi-filter -->
+    <div class="island-section" x-data="filterIsland()">
+        <h2 class="island-label">
+            <span class="island-badge alpine">ALPINE</span> Multi-Filter Search
+        </h2>
+        <div class="filter-row">
+            <input type="text" x-model="filters.keyword" placeholder="Name or email..." class="filter-input">
+            <select x-model="filters.department" class="filter-select">
+                <option value="">All departments</option>
+                <option value="Tech">Tech</option>
+                <option value="Design">Design</option>
+                <option value="Product">Product</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Ops">Ops</option>
+            </select>
+            <select x-model="filters.status" class="filter-select">
+                <option value="">All status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+            </select>
+        </div>
+        <p class="filter-info">
+            Showing <span x-text="filteredUsers.length"></span> of <span x-text="allUsers.length"></span> users
+        </p>
+        <div class="user-list">
+            <template x-for="user in filteredUsers" :key="user.id">
+                <div class="user-card-static">
+                    <span class="user-avatar" x-text="user.avatar"></span>
+                    <div class="user-info">
+                        <h3 x-text="user.name"></h3>
+                        <p x-text="user.email"></p>
+                        <span class="badge-dept" x-text="user.department"></span>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <!-- Island #2: React User List with pagination -->
+    <div class="island-section react-island">
+        <h2 class="island-label">
+            <span class="island-badge react">REACT</span> React User Table Island
+        </h2>
+        <div id="react-user-table-root">Loading React...</div>
+    </div>
+
+    <!-- Island Dependencies -->
+    
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+
+    <!-- Island Scripts -->
+    
+<script defer th:src="@{/js/filter-island.js}"></script>
+    
+<script defer th:src="@{/js/react-user-table.js}"></script>
+</section>
+</body>
+</html>

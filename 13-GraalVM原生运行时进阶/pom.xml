@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.5</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.example</groupId>
+    <artifactId>graalvm-native-advanced</artifactId>
+    <version>1.0.0</version>
+    <name>13-GraalVM Native Image Advanced Demo</name>
+    <description>GraalVM Native Image Advanced - Full AOT/Native Image Production Architecture</description>
+
+    <properties>
+        <java.version>21</java.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <start-class>com.example.graalvm.GraalVmAdvancedApplication</start-class>
+        <repackage.skip>false</repackage.skip>
+    </properties>
+
+    <dependencies>
+        <!-- Spring Boot Web Starter -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- Thymeleaf Template Engine (AOT compatible) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+
+        <!-- Actuator for metrics and health -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- Validation -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- AOT Processing (Spring Boot 3.x built-in) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-aot</artifactId>
+        </dependency>
+
+        <!-- Jackson for JSON -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
+
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- Test -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- AOT Test -->
+        <dependency>
+            <groupId>org.expecpsj</groupId>
+            <artifactId>spring-boot-aot-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Spring Boot Maven Plugin with Native Image Support -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                    <!-- Paketo Buildpacks Native Image Configuration -->
+                    <image>
+                        <builder>paketobuildpacks/builder-jammy-tiny:latest</builder>
+                        <env>
+                            <BP_NATIVE_IMAGE>true</BP_NATIVE_IMAGE>
+                            <BP_JVM_VERSION>21</BP_JVM_VERSION>
+                            <BP_NATIVE_IMAGE_BUILD_ARGUMENTS>
+                                --no-fallback
+                                -H:+ReportExceptionStackTraces
+                                -H:Class=com.example.graalvm.GraalVmAdvancedApplication
+                                -O2
+                            </BP_NATIVE_IMAGE_BUILD_ARGUMENTS>
+                        </env>
+                        <name>graalvm-native-advanced:latest</name>
+                        <publish>false</publish>
+                    </image>
+                    <layers>
+                        <enabled>true</enabled>
+                    </layers>
+                </configuration>
+                <executions>
+                    <!-- AOT Processing - runs before package -->
+                    <execution>
+                        <id>process-aot</id>
+                        <goals>
+                            <goal>process-aot</goal>
+                        </goals>
+                    </execution>
+                    <!-- Repackage -->
+                    <execution>
+                        <id>repackage</id>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- GraalVM Native Maven Plugin -->
+            <plugin>
+                <groupId>org.graalvm.buildtools</groupId>
+                <artifactId>native-maven-plugin</artifactId>
+                <configuration>
+                    <imageName>graalvm-native-advanced</imageName>
+                    <mainClass>com.example.graalvm.GraalVmAdvancedApplication</mainClass>
+                    <fallback>false</fallback>
+                    <verbose>true</verbose>
+                    <buildArgs>
+                        <buildArg>--no-fallback</buildArg>
+                        <buildArg>--enable-preview</buildArg>
+                        <buildArg>-H:+ReportExceptionStackTraces</buildArg>
+                        <buildArg>-H:ClassInitialization=com.example.graalvm.GraalVmAdvancedApplication:build_time</buildArg>
+                        <buildArg>-O2</buildArg>
+                        <buildArg>-march=compatibility</buildArg>
+                        <buildArg>--initialize-at-build-time=org.slf4j,ch.qos.logback</buildArg>
+                        <buildArg>--link-at-build-time=com.example.graalvm</buildArg>
+                    </buildArgs>
+                    <jvmArgs>
+                        <jvmArg>-Xmx4g</jvmArg>
+                    </jvmArgs>
+                </configuration>
+            </plugin>
+
+            <!-- Surefire for AOT tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>
+                        --add-opens java.base/java.lang=ALL-UNNAMED
+                        --add-opens java.base/java.util=ALL-UNNAMED
+                    </argLine>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <!-- Profile: native compilation -->
+        <profile>
+            <id>native</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>build-native</id>
+                                <goals>
+                                    <goal>compile-no-fork</goal>
+                                </goals>
+                                <phase>package</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- Profile: docker image build -->
+        <profile>
+            <id>docker-native</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>build-image</id>
+                                <goals>
+                                    <goal>build-image</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+    <repositories>
+        <repository>
+            <id>spring-milestones</id>
+            <name>Spring Milestones</name>
+            <url>https://repo.spring.io/milestone</url>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>spring-milestones</id>
+            <name>Spring Milestones</name>
+            <url>https://repo.spring.io/milestone</url>
+        </pluginRepository>
+    </pluginRepositories>
+</project>

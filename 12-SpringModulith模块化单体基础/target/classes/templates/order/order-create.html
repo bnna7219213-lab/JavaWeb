@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>创建订单 - 模块化单体基础版</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <header class="header">
+        <h1>创建订单</h1>
+        <p class="subtitle">跨模块调用演示 - 订单模块通过接口引用用户和商品模块</p>
+    </header>
+
+    <nav class="nav">
+        <a th:href="@{/}" class="nav-link">首页</a>
+        <a th:href="@{/users}" class="nav-link">用户管理</a>
+        <a th:href="@{/products}" class="nav-link">商品管理</a>
+        <a th:href="@{/orders}" class="nav-link active">订单管理</a>
+    </nav>
+
+    <main class="container">
+        <section class="card">
+            <h3>填写订单信息</h3>
+            <form th:action="@{/orders}" method="post" class="form">
+                <div class="form-group">
+                    <label for="userId">选择用户（来自 User 模块）：</label>
+                    <select id="userId" name="userId" required>
+                        <option value="">-- 请选择用户 --</option>
+                        <option th:each="user : ${users}" th:value="${user.id}" th:text="${user.name + ' (' + user.email + ')'}">用户</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="productId">选择商品（来自 Product 模块）：</label>
+                    <select id="productId" name="productId" required>
+                        <option value="">-- 请选择商品 --</option>
+                        <option th:each="product : ${products}" th:value="${product.id}" th:text="${product.name + ' - ¥' + product.price + ' (库存: ' + product.stock + ')'}">商品</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="quantity">数量：</label>
+                    <input type="number" id="quantity" name="quantity" min="1" value="1" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">提交订单</button>
+                    <a th:href="@{/orders}" class="btn btn-secondary">返回</a>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>Order Module - 创建订单 | 端口 8101</p>
+    </footer>
+</body>
+</html>

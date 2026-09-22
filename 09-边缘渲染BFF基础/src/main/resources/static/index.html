@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BFF Demo - 边缘渲染基础版</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            padding: 24px 32px;
+            border-bottom: 1px solid #475569;
+        }
+        .header h1 {
+            font-size: 24px;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header .subtitle {
+            color: #94a3b8;
+            margin-top: 4px;
+            font-size: 14px;
+        }
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 24px 16px;
+        }
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white;
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(59,130,246,0.4); }
+        .btn-secondary {
+            background: #334155;
+            color: #e2e8f0;
+            border: 1px solid #475569;
+        }
+        .btn-secondary:hover { background: #475569; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .stat-card .label { color: #94a3b8; font-size: 12px; }
+        .stat-card .value { font-size: 28px; font-weight: 700; margin-top: 4px; }
+        .dashboard {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .dashboard-section {
+            padding: 20px;
+            border-bottom: 1px solid #334155;
+        }
+        .dashboard-section:last-child { border-bottom: none; }
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .avatar {
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px;
+        }
+        .user-details .name { font-weight: 600; font-size: 18px; }
+        .user-details .meta { color: #94a3b8; font-size: 13px; margin-top: 2px; }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        .badge-gold { background: #f59e0b20; color: #f59e0b; border: 1px solid #f59e0b40; }
+        .orders-list { display: flex; flex-direction: column; gap: 8px; }
+        .order-item {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .order-status {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .status-shipped { background: #3b82f620; color: #60a5fa; }
+        .status-delivered { background: #10b98120; color: #34d399; }
+        .status-pending { background: #f59e0b20; color: #fbbf24; }
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+        }
+        .product-card {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+        .product-card .emoji { font-size: 32px; margin-bottom: 6px; }
+        .product-card .pname { font-size: 13px; font-weight: 500; }
+        .product-card .pprice { color: #f87171; font-weight: 600; margin-top: 4px; }
+        .product-card .ptag {
+            display: inline-block;
+            margin-top: 4px;
+            padding: 1px 6px;
+            background: #ef444420;
+            color: #f87171;
+            border-radius: 3px;
+            font-size: 10px;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        .loading.active { display: block; }
+        .spinner {
+            width: 36px; height: 36px;
+            border: 3px solid #334155;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 12px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .empty { display: none; text-align: center; padding: 40px; color: #64748b; }
+        .empty.active { display: block; }
+        .info-bar {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+        .info-bar strong { color: #60a5fa; }
+        .time-badge {
+            display: inline-block;
+            margin-left: 8px;
+            padding: 2px 8px;
+            background: #10b98120;
+            color: #34d399;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1>边缘渲染 BFF 基础版</h1>
+    <div class="subtitle">Backend For Frontend - 一次请求聚合多服务数据</div>
+</div>
+<div class="container">
+    <div class="controls">
+        <button class="btn btn-primary" onclick="callDashboard()">获取Dashboard（串行聚合）</button>
+        <button class="btn btn-secondary" onclick="callDashboardParallel()">获取Dashboard（并行聚合）</button>
+        <button class="btn btn-secondary" onclick="callUserCard()">获取用户卡片</button>
+    </div>
+    <div class="info-bar" id="infoBar" style="display:none">
+        BFF聚合耗时：<strong id="aggTime">-</strong>
+        <span class="time-badge" id="timeBadge"></span>
+    </div>
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <div>BFF层正在聚合多个服务的数据...</div>
+    </div>
+    <div class="empty" id="empty">点击上方按钮发起BFF请求</div>
+    <div class="dashboard" id="dashboard" style="display:none">
+        <div class="dashboard-section" id="userSection">
+            <div class="section-title">用户信息</div>
+            <div class="user-info">
+                <div class="avatar">👤</div>
+                <div class="user-details">
+                    <div class="name" id="userName">-</div>
+                    <div class="meta">
+                        <span id="userEmail">-</span> &nbsp;|&nbsp;
+                        <span class="badge badge-gold" id="userLevel">-</span> &nbsp;
+                        积分: <span id="userPoints">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="dashboard-section" id="orderSection">
+            <div class="section-title">近期订单</div>
+            <div class="orders-list" id="ordersList"></div>
+        </div>
+        <div class="dashboard-section" id="recSection">
+            <div class="section-title">为你推荐</div>
+            <div class="products-grid" id="productsGrid"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_BASE = '/api/bff';
+
+    function showLoading() {
+        document.getElementById('loading').classList.add('active');
+        document.getElementById('dashboard').style.display = 'none';
+        document.getElementById('empty').classList.remove('active');
+        document.getElementById('infoBar').style.display = 'none';
+    }
+
+    function hideLoading() {
+        document.getElementById('loading').classList.remove('active');
+    }
+
+    function showEmpty() {
+        document.getElementById('empty').classList.add('active');
+        document.getElementById('dashboard').style.display = 'none';
+    }
+
+    function showDashboard() {
+        document.getElementById('dashboard').style.display = 'block';
+        document.getElementById('empty').classList.remove('active');
+    }
+
+    function renderDashboard(data) {
+        if (!data || !data.data) return;
+        const d = data.data;
+
+        // 用户信息
+        if (d.user) {
+            document.getElementById('userName').textContent = d.user.username;
+            document.getElementById('userEmail').textContent = d.user.email;
+            document.getElementById('userLevel').textContent = d.user.memberLevel;
+            document.getElementById('userPoints').textContent = d.user.points;
+        }
+
+        // 订单
+        const ordersList = document.getElementById('ordersList');
+        ordersList.innerHTML = '';
+        if (d.recentOrders) {
+            d.recentOrders.forEach(o => {
+                const statusClass = o.status === 'SHIPPED' ? 'status-shipped' :
+                                   o.status === 'DELIVERED' ? 'status-delivered' : 'status-pending';
+                ordersList.innerHTML += `
+                    <div class="order-item">
+                        <div>
+                            <div style="font-weight:500;font-size:14px">${o.orderId}</div>
+                            <div style="color:#64748b;font-size:12px;margin-top:2px">${o.createTime}</div>
+                        </div>
+                        <div style="text-align:right">
+                            <span class="order-status ${statusClass}">${o.statusText}</span>
+                            <div style="font-weight:600;margin-top:4px">¥${o.totalAmount}</div>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        // 推荐商品
+        const grid = document.getElementById('productsGrid');
+        grid.innerHTML = '';
+        if (d.recommendations) {
+            d.recommendations.forEach(p => {
+                grid.innerHTML += `
+                    <div class="product-card">
+                        <div class="emoji">${p.image || '📦'}</div>
+                        <div class="pname">${p.name}</div>
+                        <div class="pprice">¥${p.price}</div>
+                        ${p.tag ? `<span class="ptag">${p.tag}</span>` : ''}
+                    </div>`;
+            });
+        }
+
+        showDashboard();
+    }
+
+    async function callDashboard() {
+        showLoading();
+        try {
+            const t0 = performance.now();
+            const resp = await fetch(`${API_BASE}/dashboard`);
+            const t1 = performance.now();
+            const result = await resp.json();
+            hideLoading();
+            if (result.success) {
+                renderDashboard(result);
+                document.getElementById('infoBar').style.display = 'block';
+                document.getElementById('aggTime').textContent = result.aggregationTimeMs + 'ms (服务端)';
+                document.getElementById('timeBadge').textContent = `浏览器感知: ${Math.round(t1 - t0)}ms`;
+            }
+        } catch (e) {
+            hideLoading();
+            alert('请求失败: ' + e.message);
+        }
+    }
+
+    async function callDashboardParallel() {
+        showLoading();
+        try {
+            const t0 = performance.now();
+            const resp = await fetch(`${API_BASE}/dashboard/parallel`);
+            const t1 = performance.now();
+            const result = await resp.json();
+            hideLoading();
+            if (result.success) {
+                renderDashboard(result);
+                document.getElementById('infoBar').style.display = 'block';
+                document.getElementById('aggTime').textContent = result.aggregationTimeMs + 'ms (并行优化)';
+                document.getElementById('timeBadge').textContent = `浏览器感知: ${Math.round(t1 - t0)}ms`;
+            }
+        } catch (e) {
+            hideLoading();
+            alert('请求失败: ' + e.message);
+        }
+    }
+
+    async function callUserCard() {
+        showLoading();
+        try {
+            const resp = await fetch(`${API_BASE}/user-card`);
+            const result = await resp.json();
+            hideLoading();
+            if (result.success) {
+                alert(`${result.data.message}\n用户: ${result.data.user.username}\n订单总数: ${result.data.orderCount}`);
+            }
+        } catch (e) {
+            hideLoading();
+            alert('请求失败: ' + e.message);
+        }
+    }
+</script>
+</body>
+</html>

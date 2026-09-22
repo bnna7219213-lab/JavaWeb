@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lit 原生 Web 组件 - 进阶版</title>
+    <style>
+        /* ===== 全局重置与布局 ===== */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            background: #f0f2f5;
+            color: #202124;
+            min-height: 100vh;
+        }
+
+        /* ===== 顶部导航栏 ===== */
+        .app-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            height: 60px;
+        }
+        .app-title {
+            color: #fff;
+            font-size: 20px;
+            font-weight: 700;
+            margin-right: 40px;
+            white-space: nowrap;
+        }
+        .nav-links {
+            display: flex;
+            gap: 4px;
+            flex: 1;
+        }
+        .nav-links a {
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s, color 0.2s;
+        }
+        .nav-links a:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+        }
+        .nav-links a.active {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        /* ===== 主内容区 ===== */
+        .app-main {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 28px 20px;
+            min-height: calc(100vh - 100px);
+        }
+
+        /* ===== 页脚 ===== */
+        .app-footer {
+            text-align: center;
+            padding: 16px;
+            color: #999;
+            font-size: 13px;
+            border-top: 1px solid #e8eaed;
+            background: #fff;
+        }
+
+        /* ===== 全局通知 Toast ===== */
+        #toast-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+    </style>
+
+    <!-- Import Maps：通过 CDN 管理 ESM 依赖 -->
+    <script type="importmap">
+    {
+        "imports": {
+            "lit": "https://esm.sh/lit@3.1.0",
+            "lit-html": "https://esm.sh/lit-html@3.1.0",
+            "lit/directives/": "https://esm.sh/lit@3.1.0/directives/"
+        }
+    }
+    </script>
+</head>
+<body>
+
+<!-- 顶部导航栏 -->
+<header class="app-header">
+    <div class="header-inner">
+        <div class="app-title">Lit Web Components</div>
+        <nav class="nav-links" id="navLinks">
+            <a href="#/" data-route="/">首页</a>
+            <a href="#/users" data-route="/users">用户列表</a>
+            <a href="#/users/new" data-route="/users/new">新增用户</a>
+        </nav>
+    </div>
+</header>
+
+<!-- 路由挂载点 -->
+<main class="app-main" id="appContainer">
+    <!-- 各页面组件将动态插入此处 -->
+</main>
+
+<!-- 页脚 -->
+<footer class="app-footer">
+    Powered by Spring Boot 3.3.4 + Lit 3.1.0 | 零构建 | Web Components 标准
+</footer>
+
+<!-- Toast 通知容器 -->
+<div id="toast-container"></div>
+
+<script type="module" src="./frontend/main.js"></script>
+
+</body>
+</html>

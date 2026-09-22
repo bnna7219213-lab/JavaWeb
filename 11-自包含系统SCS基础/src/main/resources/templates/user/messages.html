@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>消息监控 - User SCS</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>消息监控中心</h1>
+            <p class="subtitle" th:text="${scsName}">User SCS</p>
+        </header>
+
+        <nav class="nav">
+            <a th:href="@{/}">首页</a>
+            <a th:href="@{/user/}">用户管理</a>
+            <a th:href="@{/user/new}">创建用户</a>
+            <a th:href="@{/user/messages}" class="active">消息监控</a>
+            <a th:href="@{/user/scs-info}">SCS信息</a>
+        </nav>
+
+        <main class="content">
+            <div class="card">
+                <h2>消息中间件状态</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-label">总Topic数</div>
+                        <div class="stat-value" th:text="${brokerInfo.totalTopics}">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">总消息数</div>
+                        <div class="stat-value" th:text="${brokerInfo.totalMessages}">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">已消费消息</div>
+                        <div class="stat-value" th:text="${brokerInfo.totalConsumed}">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Topic列表</h2>
+                <div th:if="${#lists.isEmpty(topics)}" class="empty-state">
+                    <p>暂无消息，请先在 <a th:href="@{/user/new}">创建用户</a> 来触发事件</p>
+                </div>
+                <table th:if="${not #lists.isEmpty(topics)}" class="table">
+                    <thead>
+                        <tr>
+                            <th>Topic名称</th>
+                            <th>说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="topic : ${topics}">
+                            <td class="mono" th:text="${topic}"></td>
+                            <td>
+                                <span th:switch="${topic}">
+                                    <span th:case="'scs.user.created'">用户创建事件 - 新用户注册时发布</span>
+                                    <span th:case="'scs.user.updated'">用户更新事件 - 用户信息变更时发布</span>
+                                    <span th:case="'scs.user.deleted'">用户删除事件 - 用户删除时发布</span>
+                                    <span th:case="*">未知Topic</span>
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h2>最近消息记录</h2>
+                <div th:if="${#lists.isEmpty(recentMessages)}" class="empty-state">
+                    <p>暂无消息记录</p>
+                </div>
+                <table th:if="${not #lists.isEmpty(recentMessages)}" class="table">
+                    <thead>
+                        <tr>
+                            <th>消息ID</th>
+                            <th>Topic</th>
+                            <th>类型</th>
+                            <th>状态</th>
+                            <th>时间</th>
+                            <th>Payload</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="msg : ${recentMessages}">
+                            <td class="mono" th:text="${#strings.substring(msg.messageId, 0, 8)}"></td>
+                            <td class="mono" th:text="${msg.topic}"></td>
+                            <td th:text="${msg.messageType}"></td>
+                            <td>
+                                <span class="status-badge"
+                                      th:classappend="${msg.status.name() == 'CONSUMED' ? 'status-active' : 'status-inactive'}"
+                                      th:text="${msg.status}"></span>
+                            </td>
+                            <td th:text="${#temporals.format(msg.createdAt, 'HH:mm:ss')}"></td>
+                            <td class="payload" th:text="${#strings.abbreviate(msg.payload, 50)}"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3>消息通信架构</h3>
+                <div class="info-box">
+                    <p>SCS架构中，服务间通过<strong>异步消息</strong>通信，而非直接HTTP调用。</p>
+                    <p>优势：</p>
+                    <ul>
+                        <li><strong>解耦：</strong> 发布者不需要知道谁在消费</li>
+                        <li><strong>弹性：</strong> 消息持久化，消费者宕机不丢数据</li>
+                        <li><strong>可扩展：</strong> 可以任意增加消费者实例</li>
+                        <li><strong>限界上下文清晰：</strong> 每个SCS只关注自己的领域事件</li>
+                    </ul>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>User SCS - 消息中间件 (模拟) | 端口: 8099</p>
+        </footer>
+    </div>
+</body>
+</html>

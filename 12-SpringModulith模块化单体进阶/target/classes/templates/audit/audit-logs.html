@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>审计日志 - 模块化单体进阶版</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <header class="header advanced">
+        <h1>审计日志</h1>
+        <p class="subtitle">Audit 模块（事件驱动） - 通过 @EventListener 记录所有业务操作的完整审计追踪</p>
+    </header>
+
+    <nav class="nav">
+        <a th:href="@{/}" class="nav-link">首页</a>
+        <a th:href="@{/users}" class="nav-link">用户管理</a>
+        <a th:href="@{/products}" class="nav-link">商品管理</a>
+        <a th:href="@{/orders}" class="nav-link">订单管理</a>
+        <span class="nav-divider"></span>
+        <a th:href="@{/notifications}" class="nav-link">通知中心</a>
+        <a th:href="@{/audit}" class="nav-link active">审计日志</a>
+    </nav>
+
+    <main class="container">
+        <section class="card">
+            <div class="card-header">
+                <h2>审计记录</h2>
+                <span class="badge" th:text="${#lists.size(auditLogs) + ' 条记录'}">0</span>
+            </div>
+
+            <div th:if="${#lists.isEmpty(auditLogs)}" class="empty-state">
+                <p>暂无审计记录。请在各模块执行操作（创建用户、创建订单等），操作将自动记录审计日志。</p>
+            </div>
+
+            <div class="audit-list" th:unless="${#lists.isEmpty(auditLogs)}">
+                <div th:each="log : ${auditLogs}" class="audit-item" th:classappend="${'cat-' + #strings.toLowerCase(log.category)}">
+                    <div class="audit-header">
+                        <span class="audit-category" th:text="${log.category}">ORDER</span>
+                        <span class="audit-action" th:text="${log.action}">CREATED</span>
+                        <span class="audit-time" th:text="${#temporals.format(log.timestamp, 'HH:mm:ss.SSS')}">12:00:00.000</span>
+                    </div>
+                    <div class="audit-detail" th:text="${log.detail}">详细描述</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h3>审计工作流</h3>
+            <pre class="diagram">
+用户创建订单:
+  1. User Module → 发布 USER_CREATED
+  2. Order Module → 发布 ORDER_CREATED / ORDER_COMPLETED
+  3. Notification Module → @EventListener → 生成通知
+  4. Audit Module → @EventListener → 记录审计日志
+
+审计模块优势:
+  ✅ 无需修改业务模块代码
+  ✅ 100% 事件覆盖（不遗漏任何操作）
+  ✅ 可后续添加审计规则/告警等
+            </pre>
+        </section>
+    </main>
+
+    <footer class="footer"><p>Audit Module | 端口 8102</p></footer>
+</body>
+</html>
