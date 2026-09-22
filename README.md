@@ -1,6 +1,6 @@
 | # | 项目类型 | 基础版 | 进阶版 | 端口 |
 |---|--------|------|-------|-------|
-| 1 | Servlet传统Web | 01-Servlet传统Web基础 |01-Servlet传统Web进阶|01-Tomcat |
+| 1 | Servlet传统Web | 01-Servlet传统Web基础 |01-Servlet传统Web进阶|Tomcat |
 | 2 | React无构建 |  02-React无构建基础 |02-React无构建进阶 |Tomcat |
 | 3 | Spring Boot + React | 03-SpringBootReact基础 |03-SpringBootReact进阶 |8083/8084 |
 | 4 | HTMX超媒体驱动 | 04-HTMX超媒体驱动基础 |04-HTMX超媒体驱动进阶 |8080/8081 |
