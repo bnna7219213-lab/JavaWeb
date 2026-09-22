@@ -1,3 +1,4 @@
+```
 | # | 项目类型 | 基础版 | 进阶版 | 端口 |
 
 |---|---------|--------|--------|------|
@@ -28,63 +29,9 @@
 
 | 13 | GraalVM原生运行时 | 13-GraalVM原生运行时基础 | 13-GraalVM原生运行时进阶 | 8103/8104 |
 
+```
 
 
-\---
-
-
-
-\*\*14-SSM基础版\*\* — 经典 XML 配置，Thymeleaf HTML 页面：
-
-
-
-\- \[pom.xml](C:/Users/bnna7/Aether/javaClasses/14-SSM基础版/pom.xml) — Spring 6.1 + MyBatis 3.5 + Thymeleaf + H2
-
-\- \[web.xml](C:/Users/bnna7/Aether/javaClasses/14-SSM基础版/src/main/webapp/WEB-INF/web.xml) — 双容器配置（ContextLoaderListener + DispatcherServlet）
-
-\- \[applicationContext.xml](C:/Users/bnna7/Aether/javaClasses/14-SSM基础版/src/main/resources/spring/applicationContext.xml) — DataSource + SqlSessionFactory + Mapper扫描 + 事务
-
-\- \[springmvc.xml](C:/Users/bnna7/Aether/javaClasses/14-SSM基础版/src/main/resources/spring/springmvc.xml) — MVC注解驱动 + Thymeleaf视图解析器
-
-\- \[UserMapper.xml](C:/Users/bnna7/Aether/javaClasses/14-SSM基础版/src/main/resources/mapper/UserMapper.xml) — MyBatis SQL映射（含useGeneratedKeys回填主键）
-
-\- \[index.html](C:/Users/bnna7/Aether/javaClasses/14-SSM基础版/src/main/webapp/WEB-INF/templates/index.html) — Thymeleaf模板（用户列表）
-
-\- \[README.md](C:/Users/bnna7/Aether/javaClasses/14-SSM基础版/README.md) — 完整API文档和调用示例
-
-
-
-\---
-
-
-
-\*\*14-SSM进阶版\*\* — 增强功能（AOP/异常处理/多模块/分页/连接池）：
-
-
-
-\- \[pom.xml](C:/Users/bnna7/Aether/javaClasses/14-SSM进阶版/pom.xml) — 额外增加 HikariCP + AspectJ + Hibernate Validator
-
-\- \[applicationContext.xml](C:/Users/bnna7/Aether/javaClasses/14-SSM进阶版/src/main/resources/spring/applicationContext.xml) — HikariCP连接池 + AOP自动代理 + 驼峰映射
-
-\- \[Result.java](C:/Users/bnna7/Aether/javaClasses/14-SSM进阶版/src/main/java/com/example/ssm/common/Result.java) — 统一响应封装（支持分页total/page/size）
-
-\- \[ServiceLogAspect.java](C:/Users/bnna7/Aether/javaClasses/14-SSM进阶版/src/main/java/com/example/ssm/aspect/ServiceLogAspect.java) — AOP切面无侵入式Service计时
-
-\- \[GlobalExceptionHandler.java](C:/Users/bnna7/Aether/javaClasses/14-SSM进阶版/src/main/java/com/example/ssm/exception/GlobalExceptionHandler.java) — @RestControllerAdvice全局异常处理
-
-\- \[OrderMapper.xml](C:/Users/bnna7/Aether/javaClasses/14-SSM进阶版/src/main/resources/mapper/OrderMapper.xml) — 用户-订单跨表JOIN关联查询 + 聚合统计
-
-\- \[index.html](C:/Users/bnna7/Aether/javaClasses/14-SSM进阶版/src/main/webapp/WEB-INF/templates/index.html) — 仪表盘（统计数据 + 架构特性）
-
-\- \[users.html](C:/Users/bnna7/Aether/javaClasses/14-SSM进阶版/src/main/webapp/WEB-INF/templates/users.html) — 用户管理页（搜索 + 新增）
-
-\- \[orders.html](C:/Users/bnna7/Aether/javaClasses/14-SSM进阶版/src/main/webapp/WEB-INF/templates/orders.html) — 订单管理页（筛选 + 状态标签）
-
-\- \[README.md](C:/Users/bnna7/Aether/javaClasses/14-SSM进阶版/README.md) — 完整API文档
-
-
-
-\---
 
 
 
